@@ -85,42 +85,9 @@ For local package development:
 bun run build
 ```
 
-## Publish
+## Releases
 
-Recommended flow:
-
-1. Publish the package once manually.
-2. Push the repository to GitHub.
-3. Configure npm Trusted Publishing for the GitHub repository.
-4. Push a version tag such as `v0.1.0`.
-5. Let GitHub Actions publish future versions.
-
-The package includes a publish workflow at `.github/workflows/publish.yml`.
-
-Trusted Publishing means you do not store or rotate an npm publish token in GitHub secrets. npm trusts the GitHub Actions identity for this repository instead.
-
-After the first manual publish, configure Trusted Publishing in the npm package UI for `@nogg-aholic/nrpc`.
-
-The initial manual publish is intentionally done without package-forced provenance so `npm publish` works from a local machine before Trusted Publishing is configured.
-
-At npm, add a trusted publisher for:
-
-- owner: `Nogg-aholic`
-- repository: `nRPC`
-- workflow file: `.github/workflows/publish.yml`
-
-Example:
-
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-For a local packaging check before tagging:
-
-```bash
-npm pack --dry-run
-```
+Releases are published from the GitHub repository and distributed on npm as `@nogg-aholic/nrpc`.
 
 ## API
 
@@ -243,7 +210,6 @@ import {
 	decodeRpcReturnMessage,
 	encodeRpcAwaitMessage,
 	encodeRpcReturnMessage,
-} from 'nrpc';
 } from '@nogg-aholic/nrpc';
 
 const clientToServer = {
