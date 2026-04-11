@@ -70,13 +70,13 @@ Not supported:
 Install from npm:
 
 ```bash
-npm install nrpc
+npm install @nogg-aholic/nrpc
 ```
 
 Or with Bun:
 
 ```bash
-bun add nrpc
+bun add @nogg-aholic/nrpc
 ```
 
 For local package development:
@@ -89,14 +89,19 @@ bun run build
 
 Recommended flow:
 
-1. Push the repository to GitHub.
-2. Configure npm Trusted Publishing for the GitHub repository.
-3. Push a version tag such as `v0.1.0`.
-4. Let GitHub Actions publish the package.
+1. Publish the package once manually.
+2. Push the repository to GitHub.
+3. Configure npm Trusted Publishing for the GitHub repository.
+4. Push a version tag such as `v0.1.0`.
+5. Let GitHub Actions publish future versions.
 
 The package includes a publish workflow at `.github/workflows/publish.yml`.
 
 Trusted Publishing means you do not store or rotate an npm publish token in GitHub secrets. npm trusts the GitHub Actions identity for this repository instead.
+
+After the first manual publish, configure Trusted Publishing in the npm package UI for `@nogg-aholic/nrpc`.
+
+The initial manual publish is intentionally done without package-forced provenance so `npm publish` works from a local machine before Trusted Publishing is configured.
 
 At npm, add a trusted publisher for:
 
@@ -160,7 +165,7 @@ The frame helpers are generic. You provide the event byte so the package can be 
 ### Encode And Decode A Value
 
 ```ts
-import { decodeRpcValue, encodeRpcValue } from 'nrpc';
+import { decodeRpcValue, encodeRpcValue } from '@nogg-aholic/nrpc';
 
 const encoded = encodeRpcValue({
 	ok: true,
@@ -174,7 +179,7 @@ const [decoded] = decodeRpcValue(encoded);
 ### Encode An Awaiting RPC Call
 
 ```ts
-import { encodeRpcAwaitMessage } from 'nrpc';
+import { encodeRpcAwaitMessage } from '@nogg-aholic/nrpc';
 
 const RPC_CALL_AWAIT = 0x0b;
 
@@ -190,7 +195,7 @@ const message = encodeRpcAwaitMessage(
 ### Decode An Awaiting RPC Call
 
 ```ts
-import { decodeRpcAwaitMessage } from 'nrpc';
+import { decodeRpcAwaitMessage } from '@nogg-aholic/nrpc';
 
 const RPC_CALL_AWAIT = 0x0b;
 
@@ -205,7 +210,7 @@ const decoded = decodeRpcAwaitMessage(message, RPC_CALL_AWAIT);
 ### Encode A Return Frame
 
 ```ts
-import { encodeRpcReturnMessage } from 'nrpc';
+import { encodeRpcReturnMessage } from '@nogg-aholic/nrpc';
 
 const RPC_RETURN = 0x2a;
 
@@ -220,7 +225,7 @@ const reply = encodeRpcReturnMessage(
 ### Decode A Return Frame
 
 ```ts
-import { decodeRpcReturnMessage } from 'nrpc';
+import { decodeRpcReturnMessage } from '@nogg-aholic/nrpc';
 
 const RPC_RETURN = 0x2a;
 
@@ -239,6 +244,7 @@ import {
 	encodeRpcAwaitMessage,
 	encodeRpcReturnMessage,
 } from 'nrpc';
+} from '@nogg-aholic/nrpc';
 
 const clientToServer = {
 	callAwait: 0x0b,

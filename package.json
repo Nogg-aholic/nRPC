@@ -1,5 +1,5 @@
 {
-  "name": "nrpc",
+  "name": "@nogg-aholic/nrpc",
   "description": "Small binary RPC codec for compact value encoding and generic RPC message framing.",
   "version": "0.1.0",
   "homepage": "https://github.com/Nogg-aholic/nRPC#readme",
@@ -32,9 +32,6 @@
   "files": [
     "dist"
   ],
-  "publishConfig": {
-    "provenance": true
-  },
   "scripts": {
     "build": "bunx tsc -p ./tsconfig.json",
     "prepack": "bun run build"
