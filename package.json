@@ -2,7 +2,8 @@
   "name": "nrpc",
   "description": "Small binary RPC codec for compact value encoding and generic RPC message framing.",
   "version": "0.1.0",
-  "license": "UNLICENSED",
+  "homepage": "https://github.com/Nogg-aholic/nRPC#readme",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -11,6 +12,14 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
+  },
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nogg-aholic/nRPC.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Nogg-aholic/nRPC/issues"
   },
   "keywords": [
     "rpc",
@@ -23,8 +32,12 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "provenance": true
+  },
   "scripts": {
-    "build": "bunx tsc -p ./tsconfig.json"
+    "build": "bunx tsc -p ./tsconfig.json",
+    "prepack": "bun run build"
   },
   "devDependencies": {
     "typescript": "^6.0.2"

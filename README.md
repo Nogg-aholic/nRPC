@@ -67,10 +67,54 @@ Not supported:
 
 ## Install
 
-Inside this workspace the package lives at `packages/nRPC` and builds with:
+Install from npm:
+
+```bash
+npm install nrpc
+```
+
+Or with Bun:
+
+```bash
+bun add nrpc
+```
+
+For local package development:
 
 ```bash
 bun run build
+```
+
+## Publish
+
+Recommended flow:
+
+1. Push the repository to GitHub.
+2. Configure npm Trusted Publishing for the GitHub repository.
+3. Push a version tag such as `v0.1.0`.
+4. Let GitHub Actions publish the package.
+
+The package includes a publish workflow at `.github/workflows/publish.yml`.
+
+Trusted Publishing means you do not store or rotate an npm publish token in GitHub secrets. npm trusts the GitHub Actions identity for this repository instead.
+
+At npm, add a trusted publisher for:
+
+- owner: `Nogg-aholic`
+- repository: `nRPC`
+- workflow file: `.github/workflows/publish.yml`
+
+Example:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+For a local packaging check before tagging:
+
+```bash
+npm pack --dry-run
 ```
 
 ## API
