@@ -1,7 +1,7 @@
 {
   "name": "@nogg-aholic/nrpc",
   "description": "Small binary RPC codec for compact value encoding and generic RPC message framing.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://github.com/Nogg-aholic/nRPC#readme",
   "license": "MIT",
   "type": "module",
@@ -11,6 +11,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./upstream-proxy-injection": {
+      "types": "./dist/upstream-proxy-injection.d.ts",
+      "import": "./dist/upstream-proxy-injection.js"
     }
   },
   "sideEffects": false,
