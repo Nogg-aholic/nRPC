@@ -1,16 +1,27 @@
 {
   "name": "@nogg-aholic/nrpc",
   "description": "Small binary RPC codec for compact value encoding and generic RPC message framing.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "homepage": "https://github.com/Nogg-aholic/nRPC#readme",
   "license": "MIT",
   "type": "module",
+  "bin": {
+    "nrpc-generate-declaration-lines": "./dist/generate-declaration-lines-cli.js"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./declaration-lines-generator": {
+      "types": "./dist/declaration-lines-generator.d.ts",
+      "import": "./dist/declaration-lines-generator.js"
+    },
+    "./generate-declaration-lines-cli": {
+      "types": "./dist/generate-declaration-lines-cli.d.ts",
+      "import": "./dist/generate-declaration-lines-cli.js"
     },
     "./upstream-proxy-injection": {
       "types": "./dist/upstream-proxy-injection.d.ts",
@@ -41,6 +52,8 @@
     "prepack": "bun run build"
   },
   "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^25.5.2",
     "typescript": "^6.0.2"
   }
 }
