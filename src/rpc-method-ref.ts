@@ -2,17 +2,24 @@ export const NRPC_METHOD_REF = Symbol.for('@nogg-aholic/nrpc/method-ref');
 
 export type RpcPromiseLikeKeys = 'then' | 'catch' | 'finally';
 
-export type RpcSymbolRef = {
+type RpcMethodRefMetadata = {
   __nrpcMethodName?: string;
   [NRPC_METHOD_REF]?: true;
 };
 
-export type RpcMethodRef<Args extends any[] = any[], Result = any> =
-  ((...args: Args) => Promise<Awaited<Result>>) & {
-    __nrpcMethodName?: string;
-    [NRPC_METHOD_REF]?: true;
-  };
+export type RpcSymbolRef = RpcMethodRefMetadata | RpcMethodRef<any[], any>;
 
+export type RpcMethodRef<Args extends any[] = any[], Result = any> =
+  ((...args: Args) => Promise<Awaited<Result>>) & RpcMethodRefMetadata;
+/*
+type __nojsxPromiseLikeKeys = 'then' | 'catch' | 'finally';
+type __nojsxRpcify<T> =
+  T extends (...args: infer A) => infer R
+    ? ((...args: A) => Promise<Awaited<R>>) & { __nojsxRpcName?: string }
+    : T extends object
+      ? { [K in keyof T as K extends __nojsxPromiseLikeKeys ? never : K]: __nojsxRpcify<T[K]> }
+      : T;
+*/
 export type Rpcify<T> =
   T extends (...args: infer A) => infer R
     ? RpcMethodRef<A, R>
@@ -89,7 +96,7 @@ export function getRpcMethodName(value: unknown): string | undefined {
     return undefined;
   }
 
-  const candidate = value as RpcSymbolRef & { [NRPC_METHOD_REF]?: true };
+  const candidate = value as RpcMethodRefMetadata;
   const methodName = candidate.__nrpcMethodName;
   return typeof methodName === 'string' && methodName.length > 0 ? methodName : undefined;
 }
@@ -99,7 +106,7 @@ export function isRpcMethodRef(value: unknown): value is RpcMethodRef<any[], any
     return false;
   }
 
-  const candidate = value as RpcSymbolRef & { [NRPC_METHOD_REF]?: true };
+  const candidate = value as RpcMethodRefMetadata;
   return candidate[NRPC_METHOD_REF] === true || typeof candidate.__nrpcMethodName === 'string';
 }
 
