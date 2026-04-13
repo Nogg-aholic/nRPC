@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
+      id-token: write
     defaults:
       run:
         working-directory: .
@@ -70,8 +70,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: https://npm.pkg.github.com
-          scope: '@nogg-aholic'
+          registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
         run: bun install
@@ -85,10 +84,8 @@ jobs:
       - name: Pack release tarball
         run: npm pack
 
-      - name: Publish to GitHub Packages
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm publish --registry=https://npm.pkg.github.com
+      - name: Publish to npm
+        run: npm publish --provenance --access public
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2

@@ -4,6 +4,7 @@ export type RpcPromiseLikeKeys = 'then' | 'catch' | 'finally';
 
 export type RpcSymbolRef = {
   __nrpcMethodName?: string;
+  [NRPC_METHOD_REF]?: true;
 };
 
 export type RpcMethodRef<Args extends any[] = any[], Result = any> =
