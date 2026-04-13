@@ -27,6 +27,7 @@ It extracts the reusable part of the transport layer: binary value encoding and 
 - binary encoding for common JS values
 - typed-array support, including bigint typed arrays
 - generic call, await, and return frame helpers
+- typed symbolic method references for ergonomic RPC callsites
 - no framework assumptions
 - ESM package with declaration output
 
@@ -117,6 +118,9 @@ The frame helpers are generic. You provide the event byte so the package can be 
 - `RpcCallMessage`
 - `RpcAwaitMessage`
 - `RpcReturnMessage`
+- `Rpcify<T>`
+- `RpcMethodRef<Args, Result>`
+- `RpcSymbolRef`
 
 ### Utility Exports
 
@@ -126,6 +130,11 @@ The frame helpers are generic. You provide the event byte so the package can be 
 - `getTypedArrayType`
 - `toUint8Array`
 - `createTypedArray`
+- `createNamedRpcMethodRef`
+- `createRpcProxy<T>`
+- `getRpcMethodName`
+- `isRpcMethodRef`
+- `serializeRpcMethodRefs`
 
 ## Examples
 
