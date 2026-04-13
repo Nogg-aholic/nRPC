@@ -40,15 +40,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ -f "$NPM_CONFIG_USERCONFIG" ]; then
-            python - <<'PY'
-from pathlib import Path
-import os
-
-path = Path(os.environ['NPM_CONFIG_USERCONFIG'])
-lines = path.read_text(encoding='utf-8').splitlines()
-filtered = [line for line in lines if '_authToken=' not in line]
-path.write_text('\n'.join(filtered) + ('\n' if filtered else ''), encoding='utf-8')
-PY
+            grep -v '_authToken=' "$NPM_CONFIG_USERCONFIG" > "$NPM_CONFIG_USERCONFIG.tmp" || true
+            mv "$NPM_CONFIG_USERCONFIG.tmp" "$NPM_CONFIG_USERCONFIG"
           fi
 
       - name: Install dependencies
