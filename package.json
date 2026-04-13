@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "nrpc-generate-declaration-lines": "./dist/generate-declaration-lines-cli.js"
+    "nrpc-generate-declaration-lines": "dist/generate-declaration-lines-cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -31,7 +31,7 @@
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Nogg-aholic/nRPC.git"
+    "url": "git+https://github.com/Nogg-aholic/nRPC"
   },
   "bugs": {
     "url": "https://github.com/Nogg-aholic/nRPC/issues"
