@@ -22,7 +22,10 @@ jobs:
       - name: Read package version
         id: pkg
         shell: bash
-        run: echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p 'require("./package.json").version')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -60,7 +63,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_NAME=$(node -p 'require("./package.json").name')
           if npm view "$PACKAGE_NAME" name --registry=https://registry.npmjs.org >/dev/null 2>&1; then
             echo "Package exists on npm: $PACKAGE_NAME"
           else
