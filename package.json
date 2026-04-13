@@ -36,6 +36,11 @@
   "bugs": {
     "url": "https://github.com/Nogg-aholic/nRPC/issues"
   },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "provenance": true
+  },
   "keywords": [
     "rpc",
     "binary",

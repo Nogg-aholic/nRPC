@@ -84,8 +84,20 @@ jobs:
       - name: Pack release tarball
         run: npm pack
 
+      - name: Verify npm package access
+        shell: bash
+        run: |
+          set -euo pipefail
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          if npm view "$PACKAGE_NAME" name --registry=https://registry.npmjs.org >/dev/null 2>&1; then
+            echo "Package exists on npm: $PACKAGE_NAME"
+          else
+            echo "npm does not currently expose $PACKAGE_NAME for publish/view from this account/scope."
+            echo "For trusted publishing, ensure the npm scope/package exists and the trusted publisher is attached to this exact package."
+          fi
+
       - name: Publish to npm
-        run: npm publish --provenance --access public
+        run: npm publish
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
