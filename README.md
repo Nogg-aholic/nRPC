@@ -1,8 +1,8 @@
 # nRPC
 
-`nRPC` is a small binary RPC codec package.
+`nRPC` is a small binary RPC codec package with typed callable references.
 
-It extracts the reusable part of the transport layer: binary value encoding and compact RPC message framing. It does not know anything about component lookup, method dispatch, host APIs, websocket ownership, retries, or application semantics.
+It extracts the reusable part of the transport layer: binary value encoding, compact RPC message framing, and typed callable references that can be resolved by a higher-level runtime. It does not know anything about component lookup, method dispatch, websocket ownership, retries, or application semantics.
 
 ## Scope
 
@@ -12,10 +12,11 @@ It extracts the reusable part of the transport layer: binary value encoding and 
 - typed-array transport without JSON
 - compact RPC frame encode and decode
 - caller-controlled message event codes
+- typed callable references for ergonomic callsites
 
 `nRPC` is intentionally not responsible for:
 
-- function resolution
+- function resolution policy
 - object graph lookup
 - component registries
 - transport I/O
@@ -27,7 +28,7 @@ It extracts the reusable part of the transport layer: binary value encoding and 
 - binary encoding for common JS values
 - typed-array support, including bigint typed arrays
 - generic call, await, and return frame helpers
-- typed symbolic method references for ergonomic RPC callsites
+- typed callable references for ergonomic RPC callsites
 - no framework assumptions
 - ESM package with declaration output
 
@@ -121,6 +122,10 @@ The frame helpers are generic. You provide the event byte so the package can be 
 - `Rpcify<T>`
 - `RpcMethodRef<Args, Result>`
 - `RpcSymbolRef`
+- `SyntheticRpcBinding`
+- `SyntheticRpcSurfaceDefinition`
+- `HostRpcBinding`
+- `HostRpcSurfaceDefinition`
 
 ### Utility Exports
 
@@ -135,6 +140,188 @@ The frame helpers are generic. You provide the event byte so the package can be 
 - `getRpcMethodName`
 - `isRpcMethodRef`
 - `serializeRpcMethodRefs`
+- `defineSyntheticRpcBinding`
+- `defineSyntheticRpcSurface`
+- `defineHostRpcSurface`
+- `buildSyntheticRpcDeclaration`
+- `buildSyntheticRpcRuntime`
+- `asUpstreamProxyInjectionDefinition`
+
+## Callable Models
+
+`nRPC` supports two practical ways to get a typed callable into an RPC callsite.
+
+### 1. Reflected Callables
+
+Use this when the callable already exists as a real typed function value in the consumer's TypeScript world.
+
+Examples:
+
+- a shared service contract
+- a typed API surface such as `api.users.list`
+- a framework-owned callable that is mapped at runtime
+
+This is the ideal path because TypeScript can infer parameters and return values directly from the original function signature.
+
+```ts
+type Api = {
+	users: {
+		list: () => Promise<UserList>;
+	};
+};
+
+const api = createRpcProxy<Api>(['api']);
+
+const userList = await callOnServerAsync(api.users.list);
+// inferred as UserList
+```
+
+The important point is that `nRPC` does not need generated return types here. The callable type already exists, so wrappers can use `Parameters<T>` and `ReturnType<T>` directly.
+
+For editor structure and syntax highlighting, the important piece is the typed proxy shape implied by `Rpcify<Api>`. Conceptually, `createRpcProxy<Api>(['api'])` gives TypeScript something like this:
+
+```ts
+
+```
+
+That is why `api.users.list` becomes a known callable property instead of an untyped path. The proxy does not need to execute for this typing to exist, but the typed proxy expression or an equivalent generated declaration does need to exist in code.
+
+### 2. Synthetic Callables
+
+Use this when no real function value exists locally, but you still want a typed callable reference.
+
+Examples:
+
+- host APIs exposed from another runtime
+- globals such as `vscode`
+- named helper refs such as `getDocs`
+- any external surface that must be installed into runtime and ambient type space
+
+In this model, you define a synthetic RPC surface and then generate:
+
+- declaration content for type availability
+- runtime installation code for callable refs
+
+The synthetic callable still behaves like a typed function reference at the callsite, but it is backed by metadata rather than a local implementation.
+
+## Designing A Reflected Surface
+
+If the client can see a typed callable shape, prefer reflection over generation.
+
+```ts
+import { createRpcProxy } from '@nogg-aholic/nrpc';
+
+type Api = {
+	users: {
+		list: (includeInactive?: boolean) => Promise<UserList>;
+		byId: (id: string) => Promise<User>;
+	};
+};
+
+const api = createRpcProxy<Api>(['api']);
+
+const listUsers = api.users.list;
+
+const users = await callOnServerAsync(api.users.list, true);
+const user = await callOnServerAsync(api.users.byId, '42');
+```
+
+This works because `Rpcify<T>` preserves the source function shape:
+
+- argument list from `Parameters<T>`
+- result type from `ReturnType<T>`
+
+So `api.users.list` is not an untyped string path or `any`. It is a callable RPC reference whose type is derived from the original `Api['users']['list']` signature through `Rpcify<T>`.
+
+If you want that structure to exist without a direct `createRpcProxy<Api>(...)` expression in user code, you must generate and expose an equivalent typed declaration for the proxy surface.
+
+That means the important guarantee is at the callsite:
+
+```ts
+const users = await callOnServerAsync(api.users.list, true);
+// users: UserList
+```
+
+not that the editor will necessarily display `api.users.list` itself as the raw original function type text.
+
+That is the main ergonomic path for frameworks like Elysia when the app can share or import the original contract type.
+
+## Designing A Synthetic Surface
+
+When reflection is not possible, define a synthetic surface.
+
+```ts
+import { defineHostRpcSurface } from '@nogg-aholic/nrpc';
+
+export const vscodeHostSurface = defineHostRpcSurface({
+	id: 'vscode',
+	rootPath: ['vscode'],
+	declarationTypes: [
+		"type VscodeApi = Rpcify<typeof import('vscode-api-contract')>;",
+	],
+	bindings: [
+		{
+			name: 'vscode',
+			declarationLines: ["  var vscode: VscodeApi;"],
+			runtimeExpression: "createRpcProxy(['vscode'])",
+		},
+		{
+			name: 'getDocs',
+			declarationLines: [
+				"  var getDocs:",
+				"    ((symbolOrReference: RpcSymbolRef) => Promise<string>) & { __nrpcMethodName?: string };",
+			],
+			runtimeExpression: "createNamedRpcMethodRef('getDocs')",
+		},
+	],
+});
+```
+
+Then generate declaration content:
+
+```ts
+const declarationText = buildSyntheticRpcDeclaration(vscodeHostSurface);
+```
+
+And generate runtime installation content:
+
+```ts
+const runtimeText = buildSyntheticRpcRuntime(vscodeHostSurface);
+```
+
+`nRPC` does not decide where these generated strings are written. That belongs to the integration runtime or build tooling.
+
+## Surface Helpers
+
+### `defineSyntheticRpcBinding(...)`
+
+Identity helper for a single synthetic binding.
+
+### `defineSyntheticRpcSurface(...)`
+
+Identity helper for a generic synthetic RPC surface.
+
+### `defineHostRpcSurface(...)`
+
+Alias of `defineSyntheticRpcSurface(...)` for the common "host/global surface" use case.
+
+### `buildSyntheticRpcDeclaration(...)`
+
+Builds ambient declaration text for a synthetic surface.
+
+This is useful when you need globals or externally installed callable refs to exist in TypeScript without importing an implementation.
+
+### `buildSyntheticRpcRuntime(...)`
+
+Builds runtime installation lines for a synthetic surface.
+
+By default it emits assignments to `globalThis`, but callers can customize expression rewriting and assignment targets.
+
+### `asUpstreamProxyInjectionDefinition(...)`
+
+Compatibility helper that converts the new synthetic surface shape into the legacy `UpstreamProxyInjectionDefinition` shape.
+
+Use this only when integrating with older tooling that still expects `globals` instead of `bindings`.
 
 ## Examples
 
@@ -238,6 +425,22 @@ const inbound = decodeRpcReturnMessage(reply, serverToClient.return);
 
 The important part is that `nRPC` does not assume the protocol direction. The caller owns the event-byte map.
 
+## Integration Guidance
+
+If you are designing a higher-level RPC runtime on top of `nRPC`, use this rule:
+
+- prefer reflected callables whenever the original callable type already exists
+- use synthetic surfaces only when the callable does not exist locally and must be installed or generated
+
+That distinction matters because synthetic declarations are not the source of the typing magic. They are only a fallback used to manufacture typed callable references when reflection is impossible.
+
+In other words:
+
+- reflection gives you direct type inference from the original function type
+- synthesis gives you a typed stand-in when no local function value exists
+
+Both paths are valid. Reflection should be the default.
+
 ## Wire Format
 
 At a high level, values use a tagged binary format:
@@ -297,5 +500,5 @@ Use `nRPC` when you need:
 - typed arrays without base64 or JSON overhead
 - a reusable RPC framing layer across multiple packages
 
-Do not use `nRPC` as your full RPC runtime. Pair it with your own resolver, dispatcher, and transport lifecycle.
+Do not use `nRPC` as your full RPC runtime. Pair it with your own resolver, dispatcher, surface installation, and transport lifecycle.
 

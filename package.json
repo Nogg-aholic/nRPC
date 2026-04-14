@@ -23,6 +23,10 @@
       "types": "./dist/generate-declaration-lines-cli.d.ts",
       "import": "./dist/generate-declaration-lines-cli.js"
     },
+    "./synthetic-rpc-surface": {
+      "types": "./dist/synthetic-rpc-surface.d.ts",
+      "import": "./dist/synthetic-rpc-surface.js"
+    },
     "./upstream-proxy-injection": {
       "types": "./dist/upstream-proxy-injection.d.ts",
       "import": "./dist/upstream-proxy-injection.js"
