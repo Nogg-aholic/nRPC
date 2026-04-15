@@ -38,6 +38,16 @@ export enum RpcArgTag {
   BigInt64 = 0x08,
 }
 
+export type RpcPayloadCodec<T> = {
+  encode(value: T): Uint8Array;
+  decode(data: Uint8Array, offset?: number): [T, number];
+};
+
+export type RpcMethodCodec<Args extends any[] = any[], Result = any> = {
+  args?: RpcPayloadCodec<Args>;
+  result?: RpcPayloadCodec<Awaited<Result>>;
+};
+
 export type RpcCallMessage = {
   eventCode: number;
   componentId: string;

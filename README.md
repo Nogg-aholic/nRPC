@@ -111,6 +111,307 @@ These functions only encode a value payload. They do not add any RPC request met
 
 The frame helpers are generic. You provide the event byte so the package can be reused across different protocols and directions.
 
+### Generated Codecs
+
+For object-heavy payloads, generic value encoding is often not the best path. `nRPC` includes build-time codec generation, but the intended default is namespace-wide generation from a single reflected contract root.
+
+Use generated codecs when:
+
+- the method shape is stable
+- you want smaller payloads than generic object encoding
+- you want direct typed-array handling without JSON expansion
+- you want codec metadata attached to the same endpoint refs the client already uses
+
+The generator currently supports:
+
+- `string`, `number`, `boolean`
+- integer-width specialization for integer-like fields such as `count`, `index`, `length`, `size`, `id`
+- `bigint`
+- optional via `undefined`
+- literal unions
+- discriminated unions
+- arrays and tuples
+- typed arrays such as `Uint8Array` and `Float32Array`
+- plain objects
+- policy-controlled `Date`, `Map`, and `Set`
+
+Important distinction:
+
+- `number[]` stays a logical array and is encoded as an array
+- `Uint8Array` or `Float32Array` is treated as a typed-array payload and encoded as raw bytes with typed-array metadata
+
+So if you want buffer-like transport in generated schemas, declare the field as a typed array type rather than a plain JS array type.
+
+The preferred flow is:
+
+1. define one exported contract root
+2. generate one endpoint surface from that root
+3. let `nRPC` emit all method codecs and a registry automatically
+
+Per-method generation still exists as a low-level tool, but it is not the recommended starting point for app or framework surfaces.
+
+#### Low-Level: Per-Method Codec Generation
+
+The method-level CLI still works from exported type aliases or interfaces in a source module.
+
+```ts
+export type GetChartArgs = [{ sampleCount: number }];
+
+export type GetChartResult = {
+	label: string;
+	samples: Float32Array;
+	markers: number[];
+};
+```
+
+#### 2. Generate A Codec Module
+
+With the package CLI:
+
+```bash
+nrpc-generate-codec \
+	--in ./src/chart-contract.ts \
+	--out ./src/generated/get-chart.codec.ts \
+	--method chart.get \
+	--args GetChartArgs \
+	--result GetChartResult
+```
+
+Or with Bun during local development:
+
+```bash
+bun run ./src/generate-codec-cli.ts \
+	--in ./src/chart-contract.ts \
+	--out ./src/generated/get-chart.codec.ts \
+	--method chart.get \
+	--args GetChartArgs \
+	--result GetChartResult
+```
+
+Optional policy flags:
+
+- `--date-policy iso-string|epoch-ms|reject`
+- `--map-policy entries|object|reject`
+- `--set-policy array|reject`
+
+Defaults are `reject` for all three, so those types must be opted into explicitly.
+
+#### 3. Import The Generated Method Ref
+
+The generated module exports both a codec object and a method ref with codec metadata attached.
+
+```ts
+import { benchmarkObjectHeavyMethodRef } from './generated/object-heavy.codec.js';
+```
+
+The generated method ref is already wrapped with `withRpcMethodCodec(...)`, so `getRpcMethodCodec(...)` can retrieve the method codec later.
+
+#### 4. Use Codec-Aware Frame Helpers
+
+On the caller side:
+
+```ts
+import {
+	encodeRpcAwaitMessageWithCodec,
+	getRpcMethodCodec,
+	getRpcMethodName,
+} from '@nogg-aholic/nrpc';
+import { getChartMethodRef } from './generated/get-chart.codec.js';
+
+const methodName = getRpcMethodName(getChartMethodRef)!;
+const codec = getRpcMethodCodec(getChartMethodRef)!;
+
+const request = encodeRpcAwaitMessageWithCodec(
+	0x11,
+	1,
+	methodName,
+	[{ sampleCount: 4096 }],
+	codec,
+);
+```
+
+On the receiver side:
+
+```ts
+import {
+	decodeRpcAwaitMessageWithCodec,
+	encodeRpcReturnMessageWithCodec,
+	getRpcMethodCodec,
+} from '@nogg-aholic/nrpc';
+import { getChartMethodRef } from './generated/get-chart.codec.js';
+
+const codec = getRpcMethodCodec(getChartMethodRef)!;
+const decoded = decodeRpcAwaitMessageWithCodec(requestBytes, codec, 0x11);
+
+const response = encodeRpcReturnMessageWithCodec(
+	0x12,
+	decoded.requestId,
+	true,
+	{
+		label: 'demo',
+		samples: new Float32Array(4096),
+		markers: [1, 4, 9],
+	},
+	codec,
+);
+```
+
+And on the client when decoding the return frame:
+
+```ts
+import {
+	decodeRpcReturnMessageWithCodec,
+	getRpcMethodCodec,
+} from '@nogg-aholic/nrpc';
+import { getChartMethodRef } from './generated/get-chart.codec.js';
+
+const codec = getRpcMethodCodec(getChartMethodRef)!;
+const result = decodeRpcReturnMessageWithCodec(responseBytes, codec, 0x12);
+```
+
+#### 5. Add It To Your Build
+
+Typical package script:
+
+```json
+{
+	"scripts": {
+		"generate:chart-codec": "nrpc-generate-codec --in ./src/chart-contract.ts --out ./src/generated/get-chart.codec.ts --method chart.get --args GetChartArgs --result GetChartResult"
+	}
+}
+```
+
+Run that before the app build if the source contract changed.
+
+### Generated Endpoint Surfaces
+
+If you already have a namespace-style contract type and want one build step that emits:
+
+- a typed client surface
+- generated method codecs for every endpoint
+- a generated codec registry for server-side lookup
+- optional global declaration text
+- optional runtime install text
+
+use the endpoint-surface generator.
+
+Example source contract:
+
+```ts
+export type ServerApi = {
+	users: {
+		byId: (id: string) => Promise<User>;
+		search: (query: SearchQuery) => Promise<SearchResult>;
+	};
+	docs: {
+		get: (symbol: RpcSymbolRef) => Promise<OpenApiDocument>;
+	};
+};
+```
+
+Generate the full surface:
+
+```bash
+nrpc-generate-endpoint-surface \
+	--in ./src/server-contract.ts \
+	--root ServerApi \
+	--out ./src/generated/server-api.surface.ts \
+	--root-path api \
+	--global api
+```
+
+That emits:
+
+- `server-api.surface.ts`
+- `server-api.codec-registry.ts`
+- `server-api.surface.globals.d.ts`
+- `server-api.codecs/*.codec.ts`
+
+The generated surface module creates one typed endpoint surface from the reflected root contract and resolves codecs by method name under the hood.
+
+So consumers can treat the namespace as direct endpoints:
+
+```ts
+import { apiRpcSurface } from './generated/server-api.surface.js';
+
+const user = await callOnServerAsync(apiRpcSurface.users.byId, '42');
+const result = await callOnServerAsync(apiRpcSurface.users.search, { text: 'abc' });
+```
+
+And if you want globals, install the generated runtime and declaration outputs through your existing synthetic-surface pipeline.
+
+Current shape of the generated endpoint surface flow:
+
+- input: reflected root contract type
+- output: endpoint surface + method codecs + codec registry + optional host/global install artifacts
+
+This is the right path when your server already exposes a namespace of methods and you want `nRPC` to generate both the client typing surface and the performant transport codecs from that single source of truth.
+
+Server-side codec lookup should use the generated registry directly:
+
+```ts
+import { serverApiCodecRegistry } from './generated/server-api.codec-registry.js';
+
+const codec = serverApiCodecRegistry(methodName);
+```
+
+Do not hand-register every endpoint one by one. If you already generated a namespace surface, the registry should be generated from that same contract root.
+
+### Bun Server Example
+
+There is a runnable example in [examples/nrpc-bun-server](../examples/nrpc-bun-server).
+
+It shows this flow end to end:
+
+- define a namespace-style contract type
+- generate a typed endpoint surface, per-method codecs, and a codec registry
+- serve a Bun HTTP endpoint that dispatches by generated method name
+- call the generated client surface over binary `nRPC` frames
+
+Contract:
+
+```ts
+export type DemoApi = {
+	math: {
+		add: (left: number, right: number) => Promise<number>;
+		summarize: (values: number[]) => Promise<{ total: number; terms: number[] }>;
+	};
+	greetings: {
+		hello: (name: string, excited?: boolean) => Promise<{ message: string; createdAtIso: string }>;
+	};
+};
+```
+
+Generate the surface:
+
+```bash
+cd examples/nrpc-bun-server
+bun run generate
+```
+
+That emits:
+
+- `src/generated/demo-api.surface.ts`
+- `src/generated/api.codec-registry.ts`
+- `src/generated/demo-api.surface.globals.d.ts`
+- `src/generated/api.codecs/*.codec.ts`
+
+Start the server:
+
+```bash
+bun run dev
+```
+
+In another terminal, run the client demo:
+
+```bash
+bun run client
+```
+
+The example server accepts binary `POST /rpc` requests, decodes the incoming await frame, looks up the generated codec by method name through the generated registry, dispatches into the local namespace implementation, and replies with a binary return frame.
+
+On the client side, the generated `apiRpcSurface` already has the correct reflected type shape and codec-aware method refs, so the caller only needs `getRpcMethodName(...)`, `getRpcMethodCodec(...)`, and the `encode/decode ... WithCodec(...)` helpers.
+
 ### Types And Enums
 
 - `RpcArgTag`
@@ -136,8 +437,11 @@ The frame helpers are generic. You provide the event byte so the package can be 
 - `toUint8Array`
 - `createTypedArray`
 - `createNamedRpcMethodRef`
+- `createEndpointSurface<T>`
 - `createRpcProxy<T>`
+- `createRpcCodecRegistry`
 - `getRpcMethodName`
+- `getRpcMethodCodec`
 - `isRpcMethodRef`
 - `serializeRpcMethodRefs`
 - `defineSyntheticRpcBinding`
@@ -170,7 +474,7 @@ type Api = {
 	};
 };
 
-const api = createRpcProxy<Api>(['api']);
+const api = createEndpointSurface<Api>(['api']);
 
 const userList = await callOnServerAsync(api.users.list);
 // inferred as UserList
@@ -178,7 +482,9 @@ const userList = await callOnServerAsync(api.users.list);
 
 The important point is that `nRPC` does not need generated return types here. The callable type already exists, so wrappers can use `Parameters<T>` and `ReturnType<T>` directly.
 
-For editor structure and syntax highlighting, the important piece is the typed proxy shape implied by `Rpcify<Api>`. Conceptually, `createRpcProxy<Api>(['api'])` gives TypeScript something like this:
+If you also have generated codecs for that same contract root, `createEndpointSurface<T>(...)` is the right abstraction because it preserves the reflected shape and can resolve codec metadata for the same refs.
+
+For editor structure and syntax highlighting, the important piece is the typed proxy shape implied by `Rpcify<Api>`. Conceptually, `createEndpointSurface<Api>(['api'])` gives TypeScript the same callable surface shape as `createRpcProxy<Api>(['api'])`, but leaves room for codec resolution.
 
 ```ts
 
@@ -206,10 +512,10 @@ The synthetic callable still behaves like a typed function reference at the call
 
 ## Designing A Reflected Surface
 
-If the client can see a typed callable shape, prefer reflection over generation.
+If the client can see a typed callable shape, prefer one reflected contract root and build everything from that.
 
 ```ts
-import { createRpcProxy } from '@nogg-aholic/nrpc';
+import { createEndpointSurface } from '@nogg-aholic/nrpc';
 
 type Api = {
 	users: {
@@ -218,7 +524,7 @@ type Api = {
 	};
 };
 
-const api = createRpcProxy<Api>(['api']);
+const api = createEndpointSurface<Api>(['api']);
 
 const listUsers = api.users.list;
 
@@ -232,6 +538,8 @@ This works because `Rpcify<T>` preserves the source function shape:
 - result type from `ReturnType<T>`
 
 So `api.users.list` is not an untyped string path or `any`. It is a callable RPC reference whose type is derived from the original `Api['users']['list']` signature through `Rpcify<T>`.
+
+When you also generate codecs from that same root contract, do not create a second parallel API description and do not manually register every method. Generate once from the root and use the emitted surface plus codec registry.
 
 If you want that structure to exist without a direct `createRpcProxy<Api>(...)` expression in user code, you must generate and expose an equivalent typed declaration for the proxy surface.
 
@@ -263,7 +571,7 @@ export const vscodeHostSurface = defineHostRpcSurface({
 		{
 			name: 'vscode',
 			declarationLines: ["  var vscode: VscodeApi;"],
-			runtimeExpression: "createRpcProxy(['vscode'])",
+			runtimeExpression: "createEndpointSurface(['vscode'])",
 		},
 		{
 			name: 'getDocs',
