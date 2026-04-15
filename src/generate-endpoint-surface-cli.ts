@@ -53,3 +53,4 @@ for (const file of result.files) {
 }
 
 await Bun.write(resolvedOutputPath.replace(/\.ts$/, ".globals.d.ts"), result.declarationText);
+await Bun.write(resolvedOutputPath.replace(/\.ts$/, ".surface-definition.ts"), result.surfaceDefinitionText);

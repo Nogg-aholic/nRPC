@@ -7,6 +7,7 @@ import {
 	encodeRpcReturnMessageWithCodec,
 } from "./rpc-frame.js";
 import { decodeRpcValue } from "./value-codec.js";
+import { createEndpointSurface } from "./rpc-method-ref.js";
 import {
 	createHttpRouteMatcher,
 	type HttpRouteMatch,
@@ -15,6 +16,13 @@ import {
 } from "./http-route-runtime.js";
 import type { RpcMethodCodec } from "./types.js";
 import { getRpcMethodCodec, getRpcMethodName, type RpcMethodRef } from "./rpc-method-ref.js";
+
+export type RpcClientSurface<T> =
+	T extends (...args: infer A) => infer R
+		? (...args: A) => Promise<Awaited<R>>
+		: T extends object
+			? { [K in keyof T]: RpcClientSurface<T[K]> }
+			: T;
 
 export type RpcMethodInvoker = (methodName: string, args: readonly unknown[]) => unknown | Promise<unknown>;
 
@@ -266,6 +274,20 @@ export function createFetchRpcCaller(options: FetchRpcCallerOptions) {
 		}
 		return decoded.payload as TResult;
 	};
+}
+
+export function createFetchRpcSurface<T>(
+	options: FetchRpcCallerOptions & {
+		rootPath?: string[];
+		codecResolver?: (methodName: string) => RpcMethodCodec<any[], any> | undefined;
+	},
+): RpcClientSurface<T> {
+	const { rootPath = [], codecResolver, ...callerOptions } = options;
+	const callRpcEndpoint = createFetchRpcCaller(callerOptions);
+	return createEndpointSurface<T>(rootPath, {
+		codecResolver,
+		caller: callRpcEndpoint,
+	}) as RpcClientSurface<T>;
 }
 
 export function createSyntheticRouteCaller(options: SyntheticRouteCallerOptions) {

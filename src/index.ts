@@ -11,4 +11,5 @@ export * from './http-route-runtime.js';
 export * from './web-runtime.js';
 export * from './declaration-lines-generator.js';
 export * from './synthetic-rpc-surface.js';
+export * from './structural-contract-generator.js';
 export * from './upstream-proxy-injection.js';

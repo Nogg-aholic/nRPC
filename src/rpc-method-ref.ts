@@ -1,5 +1,6 @@
 export const NRPC_METHOD_REF = Symbol.for('@nogg-aholic/nrpc/method-ref');
 export const NRPC_METHOD_CODEC = Symbol.for('@nogg-aholic/nrpc/method-codec');
+export const NRPC_METHOD_CALLER = Symbol.for('@nogg-aholic/nrpc/method-caller');
 
 import type { RpcMethodCodec } from './types.js';
 
@@ -9,12 +10,17 @@ type RpcMethodRefMetadata = {
   __nrpcMethodName?: string;
   [NRPC_METHOD_REF]?: true;
   [NRPC_METHOD_CODEC]?: RpcMethodCodec<any[], any>;
+  [NRPC_METHOD_CALLER]?: RpcMethodCaller;
 };
 
 export type RpcSymbolRef = RpcMethodRefMetadata | RpcMethodRef<any[], any>;
 
 export type RpcMethodRef<Args extends any[] = any[], Result = any> =
   ((...args: Args) => Promise<Awaited<Result>>) & RpcMethodRefMetadata;
+export type RpcMethodCaller = <TArgs extends any[] = any[], TResult = any>(
+  method: RpcMethodRef<TArgs, TResult>,
+  ...args: TArgs
+) => Promise<TResult>;
 /*
 type __nojsxPromiseLikeKeys = 'then' | 'catch' | 'finally';
 type __nojsxRpcify<T> =
@@ -45,6 +51,11 @@ function defineMethodRefMetadata(target: object, methodName: string): void {
     configurable: false,
     writable: false,
   });
+}
+
+export function attachRpcMethodMetadata<T extends object>(target: T, methodName: string): T {
+  defineMethodRefMetadata(target, methodName);
+  return target;
 }
 
 function defineMethodCodecMetadata(target: object, codec: RpcMethodCodec<any[], any>): void {
@@ -79,6 +90,8 @@ export type RpcMethodCodecResolver = (methodName: string) => RpcMethodCodec<any[
 
 export type CreateEndpointSurfaceOptions = {
   codecResolver?: RpcMethodCodecResolver;
+  methodFactory?: (methodName: string) => RpcMethodRef<any[], any>;
+  caller?: RpcMethodCaller;
 };
 
 export function createEndpointSurface<T>(
@@ -86,7 +99,7 @@ export function createEndpointSurface<T>(
   options: CreateEndpointSurfaceOptions = {},
 ): Rpcify<T> {
   const cache = new Map<string, unknown>();
-  const { codecResolver } = options;
+  const { codecResolver, methodFactory, caller } = options;
 
   const build = (parts: string[]): unknown => {
     const cacheKey = parts.join('.');
@@ -94,7 +107,11 @@ export function createEndpointSurface<T>(
       return cache.get(cacheKey);
     }
 
-    const proxy = new Proxy(function () {}, {
+    const target = cacheKey.length > 0
+      ? (methodFactory?.(cacheKey) ?? createNamedRpcMethodRef(cacheKey))
+      : function () {};
+
+    const proxy = new Proxy(target, {
       get(_target, property) {
         if (property === '__nrpcMethodName') {
           return cacheKey;
@@ -113,8 +130,14 @@ export function createEndpointSurface<T>(
         }
         return build([...parts, String(property)]);
       },
-      apply() {
-        throw new Error(`RPC reference ${cacheKey || '<root>'} cannot be invoked directly. Resolve it through your RPC caller.`);
+      apply(target, _thisArg, argArray) {
+        if (cacheKey.length === 0) {
+          throw new Error('RPC surface root cannot be invoked directly.');
+        }
+        if (!caller) {
+          throw new Error(`RPC reference ${cacheKey} cannot be invoked directly. Bind a caller or resolve it through your RPC caller.`);
+        }
+        return caller(target as RpcMethodRef<any[], any>, ...(argArray as any[]));
       },
     });
 
@@ -127,6 +150,76 @@ export function createEndpointSurface<T>(
 
 export function createRpcCodecRegistry(entries: Iterable<readonly [string, RpcMethodCodec<any[], any>]>): RpcMethodCodecResolver {
   const registry = new Map<string, RpcMethodCodec<any[], any>>(entries);
+  return (methodName: string) => registry.get(methodName);
+}
+
+export function defineEndpointSurface<T extends object>(surface: T): T {
+  return surface;
+}
+
+export function attachRpcCaller<T>(surface: T, caller: RpcMethodCaller): T {
+  const seen = new WeakMap<object, unknown>();
+
+  const bind = (value: unknown): unknown => {
+    if (typeof value === 'function') {
+      const methodName = getRpcMethodName(value);
+      if (!methodName) {
+        return value;
+      }
+
+      const existing = seen.get(value as object);
+      if (existing) {
+        return existing;
+      }
+
+      (value as RpcMethodRefMetadata)[NRPC_METHOD_CALLER] = caller;
+      seen.set(value as object, value);
+      return value;
+    }
+
+    if (!value || typeof value !== 'object') {
+      return value;
+    }
+
+    const existing = seen.get(value as object);
+    if (existing) {
+      return existing;
+    }
+
+    const out: Record<string, unknown> | unknown[] = Array.isArray(value) ? [] : {};
+    seen.set(value as object, out);
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      (out as Record<string, unknown>)[key] = bind(entry);
+    }
+    return out;
+  };
+
+  return bind(surface) as T;
+}
+
+export function createRpcCodecResolverFromSurface(surface: unknown): RpcMethodCodecResolver {
+  const registry = new Map<string, RpcMethodCodec<any[], any>>();
+
+  const visit = (value: unknown): void => {
+    if (typeof value === 'function') {
+      const methodName = getRpcMethodName(value);
+      const codec = getRpcMethodCodec(value);
+      if (methodName && codec) {
+        registry.set(methodName, codec);
+      }
+      return;
+    }
+
+    if (!value || typeof value !== 'object') {
+      return;
+    }
+
+    for (const entry of Object.values(value as Record<string, unknown>)) {
+      visit(entry);
+    }
+  };
+
+  visit(surface);
   return (methodName: string) => registry.get(methodName);
 }
 

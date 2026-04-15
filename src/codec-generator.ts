@@ -98,8 +98,8 @@ export function createProgram(entryFile: string): ts.Program {
 
 export function defaultPolicies(policies?: CodecPolicies): Required<CodecPolicies> {
 	return {
-		date: policies?.date ?? "reject",
-		map: policies?.map ?? "reject",
+		date: policies?.date ?? "iso-string",
+		map: policies?.map ?? "entries",
 		set: policies?.set ?? "reject"
 	};
 }
@@ -289,7 +289,7 @@ function unionMatchIdentifier(accessor: string): string {
 	return `__matched_${sanitizeIdentifier(accessor)}`;
 }
 
-function emitWriteExpression(shape: TypeNodeShape, accessor: string): string[] {
+export function emitWriteExpression(shape: TypeNodeShape, accessor: string): string[] {
 	switch (shape.kind) {
 		case "primitive":
 			if (shape.primitive === "string") return [`writer.writeString(${accessor});`];
@@ -372,7 +372,7 @@ function emitWriteExpression(shape: TypeNodeShape, accessor: string): string[] {
 	}
 }
 
-function emitReadExpression(shape: TypeNodeShape): string {
+export function emitReadExpression(shape: TypeNodeShape): string {
 	switch (shape.kind) {
 		case "primitive":
 			if (shape.primitive === "string") return "reader.readString()";
@@ -590,11 +590,27 @@ export type RenderRpcCodecModuleOptions = {
 	runtimeImportPath: string;
 };
 
+export type RenderInlineRpcCodecMethodOptions = Omit<RenderRpcCodecModuleOptions, 'typeImportNames' | 'typeImportPath' | 'runtimeImportPath'> & {
+	methodRefName?: string;
+	codecName?: string;
+};
+
 export function renderRpcCodecModule(options: RenderRpcCodecModuleOptions): string {
 	const exportBase = camelize(options.methodName);
+	const methodStub = [
+		"Object.defineProperties(",
+		`\t(async (..._args: ${options.argsTypeReference}) => {`,
+		`\t\tthrow new Error(${JSON.stringify(`${options.methodName} cannot be invoked directly. Resolve it through your RPC caller.`)});`,
+		`\t}) as RpcMethodRef<${options.argsTypeReference}, ${options.resultTypeReference}>,`,
+		"\t{",
+		`\t\t__nrpcMethodName: { value: ${JSON.stringify(options.methodName)}, enumerable: false, configurable: false, writable: false },`,
+		"\t\t[NRPC_METHOD_REF]: { value: true, enumerable: false, configurable: false, writable: false },",
+		"\t}",
+		")"
+	].join("\n");
 	return [
 		"// AUTO-GENERATED FILE. DO NOT EDIT.",
-		`import { createNamedRpcMethodRef, withRpcMethodCodec, type RpcMethodCodec, type RpcPayloadCodec } from "@nogg-aholic/nrpc";`,
+		`import { NRPC_METHOD_REF, withRpcMethodCodec, type RpcMethodCodec, type RpcMethodRef, type RpcPayloadCodec } from "@nogg-aholic/nrpc";`,
 		`import { GeneratedCodecReader, GeneratedCodecWriter } from \"${options.runtimeImportPath}\";`,
 		`import type { ${options.typeImportNames.join(", ")} } from \"${options.typeImportPath}\";`,
 		"",
@@ -630,10 +646,125 @@ export function renderRpcCodecModule(options: RenderRpcCodecModuleOptions): stri
 		"};",
 		"",
 		`export const ${exportBase}MethodRef = withRpcMethodCodec(`,
-		`\tcreateNamedRpcMethodRef<${options.argsTypeReference}, ${options.resultTypeReference}>(${JSON.stringify(options.methodName)}),`,
-		`\t${exportBase}Codec`,
+		...methodStub.split("\n").map((line) => `\t${line}`),
+		`\t, ${exportBase}Codec`,
 		");",
 		""
+	].join("\n");
+}
+
+export function renderInlineRpcCodecMethod(options: RenderInlineRpcCodecMethodOptions): string {
+	const exportBase = camelize(options.methodName);
+	const codecName = options.codecName ?? `${exportBase}Codec`;
+	const methodRefName = options.methodRefName ?? `${exportBase}MethodRef`;
+	const methodStub = [
+		"Object.defineProperties(",
+		`\t(async (..._args: ${options.argsTypeReference}) => {`,
+		`\t\tthrow new Error(${JSON.stringify(`${options.methodName} cannot be invoked directly. Resolve it through your RPC caller.`)});`,
+		`\t}) as RpcMethodRef<${options.argsTypeReference}, ${options.resultTypeReference}>,`,
+		"\t{",
+		`\t\t__nrpcMethodName: { value: ${JSON.stringify(options.methodName)}, enumerable: false, configurable: false, writable: false },`,
+		"\t\t[NRPC_METHOD_REF]: { value: true, enumerable: false, configurable: false, writable: false },",
+		"\t}",
+		")"
+	].join("\n");
+	return [
+		`const ${codecName}: RpcMethodCodec<${options.argsTypeReference}, ${options.resultTypeReference}> = {`,
+		"\targs: {",
+		"\t\tencode(value) {",
+		"\t\t\tconst writer = new GeneratedCodecWriter();",
+		...emitWriteExpression(options.argsShape, "value").map((line) => `\t\t\t${line}`),
+		"\t\t\treturn writer.finish();",
+		"\t\t},",
+		"\t\tdecode(data, offset = 0) {",
+		"\t\t\tconst reader = new GeneratedCodecReader(data, offset);",
+		`\t\t\tconst value = ${emitReadExpression(options.argsShape)} as ${options.argsTypeReference};`,
+		"\t\t\treturn [value, reader.offset];",
+		"\t\t}",
+		"\t},",
+		"\tresult: {",
+		"\t\tencode(value) {",
+		"\t\t\tconst writer = new GeneratedCodecWriter();",
+		...emitWriteExpression(options.resultShape, "value").map((line) => `\t\t\t${line}`),
+		"\t\t\treturn writer.finish();",
+		"\t\t},",
+		"\t\tdecode(data, offset = 0) {",
+		"\t\t\tconst reader = new GeneratedCodecReader(data, offset);",
+		`\t\t\tconst value = ${emitReadExpression(options.resultShape)} as ${options.resultTypeReference};`,
+		"\t\t\treturn [value, reader.offset];",
+		"\t\t}",
+		"\t}",
+		"};",
+		"",
+		`const ${methodRefName} = withRpcMethodCodec(`,
+		...methodStub.split("\n").map((line) => `\t${line}`),
+		`\t, ${codecName}`,
+		");",
+	].join("\n");
+}
+
+export function renderInlineRpcCodecExpression(options: Omit<RenderInlineRpcCodecMethodOptions, 'methodRefName' | 'codecName'>): string {
+	const indentBlock = (text: string, indent: string): string => text.split("\n").map((line) => `${indent}${line}`).join("\n");
+	const argsEncode = [
+		"encode(value) {",
+		"\tconst writer = new GeneratedCodecWriter();",
+		...emitWriteExpression(options.argsShape, "value").map((line) => `\t${line}`),
+		"\treturn writer.finish();",
+		"}"
+	].join("\n");
+	const argsDecode = [
+		"decode(data, offset = 0) {",
+		"\tconst reader = new GeneratedCodecReader(data, offset);",
+		`\tconst value = ${emitReadExpression(options.argsShape)} as ${options.argsTypeReference};`,
+		"\treturn [value, reader.offset];",
+		"}"
+	].join("\n");
+	const resultEncode = [
+		"encode(value) {",
+		"\tconst writer = new GeneratedCodecWriter();",
+		...emitWriteExpression(options.resultShape, "value").map((line) => `\t${line}`),
+		"\treturn writer.finish();",
+		"}"
+	].join("\n");
+	const resultDecode = [
+		"decode(data, offset = 0) {",
+		"\tconst reader = new GeneratedCodecReader(data, offset);",
+		`\tconst value = ${emitReadExpression(options.resultShape)} as ${options.resultTypeReference};`,
+		"\treturn [value, reader.offset];",
+		"}"
+	].join("\n");
+	const methodCodec = [
+		`({`,
+		"\targs: {",
+		indentBlock(argsEncode, "\t\t\t"),
+		"\t\t,",
+		indentBlock(argsDecode, "\t\t\t"),
+		"\t\t},",
+		"\tresult: {",
+		indentBlock(resultEncode, "\t\t\t"),
+		"\t\t,",
+		indentBlock(resultDecode, "\t\t\t"),
+		"\t\t}",
+		`}) as RpcMethodCodec<${options.argsTypeReference}, ${options.resultTypeReference}>`,
+	].join("\n");
+	return [
+		"Object.defineProperties(",
+		`\t(async (..._args: ${options.argsTypeReference}) => {`,
+		`\t\tthrow new Error(${JSON.stringify(`${options.methodName} cannot be invoked directly. Resolve it through your RPC caller.`)});`,
+		`\t}) as RpcMethodRef<${options.argsTypeReference}, ${options.resultTypeReference}>,`,
+		"\t{",
+		`\t\t__nrpcMethodName: { value: ${JSON.stringify(options.methodName)}, enumerable: false, configurable: false, writable: false },`,
+		"\t\t[NRPC_METHOD_REF]: { value: true, enumerable: false, configurable: false, writable: false },",
+		"\t\t[NRPC_METHOD_CODEC]: {",
+		"\t\t\tvalue: ",
+		indentBlock(methodCodec, "\t\t\t\t"),
+		"\t\t\t,",
+		"\t\t\tenumerable: false,",
+		"\t\t\tconfigurable: false,",
+		"\t\t\twritable: false,",
+		"\t\t},",
+		"\t}",
+		")",
 	].join("\n");
 }
 
@@ -641,6 +772,7 @@ export type CollectedRpcMethod = {
 	path: string[];
 	methodName: string;
 	argsShape: TypeNodeShape;
+	parameterNames: string[];
 	resultType: ts.Type;
 };
 
@@ -662,6 +794,11 @@ export function collectRpcMethods(
 			out.push({
 				path: nextPath,
 				methodName: nextPath.join("."),
+				parameterNames: signature.getParameters().map((parameter, index) => {
+					const rawName = parameter.name || `arg${index}`;
+					const sanitized = rawName.replace(/[^A-Za-z0-9_$]/g, "_");
+					return sanitized.length > 0 ? sanitized : `arg${index}`;
+				}),
 				argsShape: {
 					kind: "tuple",
 					elements: signature.getParameters().map((parameter, index) => {
