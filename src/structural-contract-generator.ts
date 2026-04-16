@@ -176,7 +176,7 @@ function renderParameterStructurally(parameter: ts.Symbol, options: StructuralCo
 	const parameterType = options.checker.getTypeOfSymbolAtLocation(parameter, declaration);
 	const normalized = normalizeType(parameterType, options.checker, defaultPolicies(options.policies), parameter.name);
 	const isOptionalParameter = ts.isParameter(declaration)
-		? !!declaration.questionToken || !!declaration.initializer || !!declaration.dotDotDotToken
+		? !!declaration.questionToken || !!declaration.dotDotDotToken
 		: false;
 	const isRest = ts.isParameter(declaration) && !!declaration.dotDotDotToken;
 	const prefix = isRest ? "..." : "";
@@ -197,6 +197,8 @@ function renderShapeStructurally(shape: TypeNodeShape, depth: number): string {
 			return shape.primitive;
 		case "bigint":
 			return "bigint";
+		case "null":
+			return "null";
 		case "unknown":
 			return "unknown";
 		case "literal":
@@ -241,13 +243,14 @@ function renderObjectShape(
 	const childIndent = "  ".repeat(depth + 1);
 	const lines = ["{"];
 	for (const property of shape.properties) {
+		const propertyName = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(property.name) ? property.name : JSON.stringify(property.name);
 		if (discriminator && property.name === discriminator) {
-			lines.push(`${childIndent}${property.name}: ${JSON.stringify(tagValue)};`);
+			lines.push(`${childIndent}${propertyName}: ${JSON.stringify(tagValue)};`);
 			continue;
 		}
 		const optionalShape = property.shape.kind === "optional" ? property.shape : undefined;
 		const typeText = renderShapeStructurally(optionalShape ? optionalShape.inner : property.shape, depth + 1);
-		lines.push(`${childIndent}${property.name}${optionalShape ? "?" : ""}: ${typeText};`);
+		lines.push(`${childIndent}${propertyName}${optionalShape ? "?" : ""}: ${typeText};`);
 	}
 	lines.push(`${indent}}`);
 	return lines.join("\n");

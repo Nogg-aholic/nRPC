@@ -20,7 +20,6 @@ const outputPath = readArg("--out");
 const rootType = readArg("--root");
 const globalName = readArg("--global");
 const declarationTypeName = readArg("--declaration-type");
-const methodModuleDir = readArg("--method-dir");
 const rootPath = readListArg("--root-path");
 const datePolicy = readArg("--date-policy") as "iso-string" | "epoch-ms" | "reject" | undefined;
 const mapPolicy = readArg("--map-policy") as "entries" | "object" | "reject" | undefined;
@@ -40,7 +39,6 @@ const result = generateEndpointSurface({
 	rootPath,
 	globalName,
 	declarationTypeName,
-	methodModuleDir,
 	policies: {
 		date: datePolicy,
 		map: mapPolicy,

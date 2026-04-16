@@ -33,7 +33,10 @@ export function generateHttpRouteManifest(options: GenerateHttpRouteManifestOpti
 		basePath,
 		protocolMode,
 		routes: methods.map((method) => {
-			const pathParts = [...rootPath, ...method.path];
+			const trimmedMethodPath = rootPath.length > 0 && method.path[0] === rootPath[rootPath.length - 1]
+				? method.path.slice(1)
+				: method.path;
+			const pathParts = [...rootPath, ...trimmedMethodPath];
 			const rootAccessor = method.path.reduce((expression, part) => `${expression}[${JSON.stringify(part)}]`, options.rootType);
 			return {
 				methodName: method.methodName,

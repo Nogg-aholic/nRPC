@@ -7,10 +7,8 @@ import {
 	defaultPolicies,
 	emitReadExpression,
 	emitWriteExpression,
-	generateRpcSurfaceCodecModules,
 	getTypeFromExportedAlias,
 	normalizeType,
-	renderRpcCodecModule,
 	type TypeNodeShape,
 	unwrapPromiseLikeType,
 	type CodecPolicies
@@ -28,7 +26,6 @@ export type GenerateEndpointSurfaceOptions = {
 	rootPath?: string[];
 	globalName?: string;
 	declarationTypeName?: string;
-	methodModuleDir?: string;
 	policies?: CodecPolicies;
 };
 
@@ -66,7 +63,6 @@ export function generateEndpointSurface(options: GenerateEndpointSurfaceOptions)
 	const rootPath = options.rootPath ?? [camelize(options.rootType)];
 	const globalName = options.globalName ?? rootPath[rootPath.length - 1] ?? camelize(options.rootType);
 	const outputDir = path.dirname(options.outputImportPath);
-	const methodModuleDir = options.methodModuleDir ?? `${globalName}.codecs`;
 	const sourceImportPath = options.moduleSpecifier ?? toModuleRelativeImport(options.outputImportPath, options.entryFile).replace(/\.ts$/, ".js");
 	const methods = collectRpcMethods(rootType, checker, policies);
 	const routeManifest = generateHttpRouteManifest({
@@ -77,31 +73,7 @@ export function generateEndpointSurface(options: GenerateEndpointSurfaceOptions)
 		protocolMode: "both",
 		policies: options.policies,
 	});
-	const codecModules = generateRpcSurfaceCodecModules({
-		entryFile: options.entryFile,
-		rootType: options.rootType,
-		outputImportPath: path.join(path.dirname(options.outputImportPath), methodModuleDir, "__codec-anchor__.ts"),
-		moduleSpecifier: options.moduleSpecifier,
-		runtimeImportPath: options.runtimeImportPath,
-		policies: options.policies
-	});
-	const codecByMethod = new Map(codecModules.map((entry) => [entry.methodName, entry]));
 	const files: GeneratedEndpointSurfaceFile[] = [];
-	for (const codecModule of codecModules) {
-		files.push({
-			path: path.join(outputDir, methodModuleDir, `${codecModule.exportBase}.codec.ts`),
-			content: codecModule.code,
-		});
-	}
-	files.push({
-		path: path.join(outputDir, `${globalName}.codec-registry.ts`),
-		content: renderGeneratedCodecRegistryModule({
-			globalName,
-			methodModuleDir,
-			methods,
-			codecByMethod
-		})
-	});
 	files.push({
 		path: options.outputImportPath,
 		content: renderGeneratedSurfaceModule({
@@ -110,9 +82,7 @@ export function generateEndpointSurface(options: GenerateEndpointSurfaceOptions)
 			globalName,
 			sourceImportPath,
 			contractModulePath: `./${path.basename(options.outputImportPath).replace(/\.surface\.ts$/, ".contract.js")}`,
-			methodModuleDir,
 			methods,
-			codecByMethod
 		})
 	});
 	const surfaceDefinition = buildSurfaceDefinition({
@@ -134,9 +104,7 @@ export function generateEndpointSurface(options: GenerateEndpointSurfaceOptions)
 			routeManifest,
 			checker,
 			policies,
-			methodModuleDir,
 			methods,
-			codecByMethod,
 		}),
 		publicModuleText: renderGeneratedSurfaceModule({
 			rootType: options.rootType,
@@ -144,9 +112,7 @@ export function generateEndpointSurface(options: GenerateEndpointSurfaceOptions)
 			globalName,
 			sourceImportPath,
 			contractModulePath: `./${path.basename(options.outputImportPath).replace(/\.surface\.ts$/, ".contract.js")}`,
-			methodModuleDir,
 			methods,
-			codecByMethod,
 		}),
 		runtimeText: buildSyntheticRpcRuntime(surfaceDefinition),
 		surfaceDefinitionText: renderSurfaceDefinitionModule({
@@ -166,16 +132,12 @@ type RenderGeneratedContractModuleOptions = {
 	routeManifest: ReturnType<typeof generateHttpRouteManifest>;
 	checker: ts.TypeChecker;
 	policies: Required<CodecPolicies>;
-	methodModuleDir: string;
 	methods: ReturnType<typeof collectRpcMethods>;
-	codecByMethod: Map<string, { methodName: string; exportBase: string; code: string }>;
 };
 
 function renderGeneratedContractModule(options: RenderGeneratedContractModuleOptions): string {
 	const inlineMethods = options.methods
 		.map((method) => {
-			const codecModule = options.codecByMethod.get(method.methodName);
-			if (!codecModule) throw new Error(`Missing codec module for ${method.methodName}`);
 			const methodTypeLiteral = renderRpcMethodLiteral(method, options.checker, options.policies);
 			const signature = renderRpcMethodImplementationSignature(method.argsShape, method.parameterNames, options.policies);
 			return {
@@ -193,10 +155,13 @@ function renderGeneratedContractModule(options: RenderGeneratedContractModuleOpt
 	return [
 		"// AUTO-GENERATED FILE. DO NOT EDIT.",
 		renderInlinedContractRuntimePrelude(),
+		`const createRpcCodecRegistry = (entries: ReadonlyArray<readonly [string, RpcMethodCodec<any[], any>]>) => { const registry = new Map<string, RpcMethodCodec<any[], any>>(entries); return (methodName: string) => registry.get(methodName); };`,
 		"",
 		`export const ${options.globalName}RpcDefinition = ${renderInlineSurfaceDefinition(inlineMethods, 0)};`,
 		"",
 		renderInlineSurfaceMetadataAttachment(options.globalName, inlineMethods),
+		"",
+		renderInlineCodecRegistryAttachment(options.globalName, inlineMethods),
 		"",
 		`export const ${options.globalName}HttpRouteManifest: HttpRouteManifest = ${JSON.stringify(stripRouteManifestTypeRefs(options.routeManifest), null, 2)};`,
 		"",
@@ -312,6 +277,35 @@ function renderInlineSurfaceMetadataAttachment(
 	return lines.join("\n\n");
 }
 
+function renderInlineCodecRegistryAttachment(
+	globalName: string,
+	entries: Array<{
+		methodName: string;
+		argsTypeReference: string;
+		resultTypeReference: string;
+		signature: string;
+		parameterNames: string[];
+		argsShape: TypeNodeShape;
+		resultShape: TypeNodeShape;
+		pathParts: string[];
+	}>,
+): string {
+	const entryLines = entries
+		.slice()
+		.sort((a, b) => a.methodName.localeCompare(b.methodName))
+		.map((entry) => {
+			const accessor = `${globalName}RpcDefinition${entry.pathParts.map((part) => `[${JSON.stringify(part)}]`).join("")}`;
+			return `\t[${JSON.stringify(entry.methodName)}, (${accessor} as RpcMethodRef<${entry.argsTypeReference}, ${entry.resultTypeReference}>)[NRPC_METHOD_CODEC] as RpcMethodCodec<${entry.argsTypeReference}, ${entry.resultTypeReference}>] as const,`;
+		});
+	return [
+		`export const ${globalName}CodecEntries = [`,
+		...entryLines,
+		`] as const;`,
+		"",
+		`export const ${globalName}CodecRegistry = createRpcCodecRegistry(${globalName}CodecEntries as ReadonlyArray<readonly [string, RpcMethodCodec<any[], any>]>);`,
+	].join("\n");
+}
+
 function renderRpcMethodCodecValue(options: {
 	argsTypeReference: string;
 	resultTypeReference: string;
@@ -371,11 +365,22 @@ function renderRpcMethodImplementationSignature(
 	if (argsShape.kind !== "tuple") {
 		throw new Error("Expected tuple args shape for RPC method implementation signature.");
 	}
+	let trailingOptionalStart = argsShape.elements.length;
+	for (let index = argsShape.elements.length - 1; index >= 0; index -= 1) {
+		if (argsShape.elements[index]?.kind === "optional") {
+			trailingOptionalStart = index;
+			continue;
+		}
+		break;
+	}
 	return argsShape.elements
 		.map((element, index) => {
 			const isOptional = element.kind === "optional";
-			const typeShape = isOptional ? element.inner : element;
-			return `${parameterNames[index] ?? `arg${index}`}${isOptional ? "?" : ""}: ${renderTypeNode(typeShape, policies, 0)}`;
+			const canUseOptionalSyntax = isOptional && index >= trailingOptionalStart;
+			const renderedType = canUseOptionalSyntax
+				? renderTypeNode(element.inner, policies, 0)
+				: renderTypeNode(element, policies, 0);
+			return `${parameterNames[index] ?? `arg${index}`}${canUseOptionalSyntax ? "?" : ""}: ${renderedType}`;
 		})
 		.join(", ");
 }
@@ -450,6 +455,8 @@ function renderTypeNode(shape: TypeNodeShape, policies: Required<CodecPolicies>,
 			return shape.primitive;
 		case "bigint":
 			return "bigint";
+		case "null":
+			return "null";
 		case "unknown":
 			return "unknown";
 		case "literal":
@@ -485,13 +492,14 @@ function renderObjectShape(shape: Extract<TypeNodeShape, { kind: "object" }>, po
 	const childIndent = "  ".repeat(depth + 1);
 	const lines: string[] = ["{"];
 	for (const property of shape.properties) {
+		const propertyName = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(property.name) ? property.name : JSON.stringify(property.name);
 		if (discriminator && property.name === discriminator) {
-			lines.push(`${childIndent}${property.name}: ${JSON.stringify(tagValue)};`);
+			lines.push(`${childIndent}${propertyName}: ${JSON.stringify(tagValue)};`);
 			continue;
 		}
 		const optionalShape = property.shape.kind === "optional" ? property.shape : undefined;
 		const typeText = renderTypeNode(optionalShape ? optionalShape.inner : property.shape, policies, depth + 1);
-		lines.push(`${childIndent}${property.name}${optionalShape ? "?" : ""}: ${typeText};`);
+		lines.push(`${childIndent}${propertyName}${optionalShape ? "?" : ""}: ${typeText};`);
 	}
 	lines.push(`${indent}}`);
 	return lines.join("\n");
@@ -503,9 +511,7 @@ type RenderGeneratedSurfaceModuleOptions = {
 	globalName: string;
 	sourceImportPath: string;
 	contractModulePath: string;
-	methodModuleDir: string;
 	methods: ReturnType<typeof collectRpcMethods>;
-	codecByMethod: Map<string, { methodName: string; exportBase: string; code: string }>;
 };
 
 function renderGeneratedSurfaceModule(options: RenderGeneratedSurfaceModuleOptions): string {
@@ -513,39 +519,10 @@ function renderGeneratedSurfaceModule(options: RenderGeneratedSurfaceModuleOptio
 		"// AUTO-GENERATED FILE. DO NOT EDIT.",
 		`export {`,
 		`\t${options.globalName}RpcDefinition,`,
-		`} from ${JSON.stringify(options.contractModulePath)};`,
-		""
-	].join("\n");
-}
-
-function renderGeneratedCodecRegistryModule(options: {
-	globalName: string;
-	methodModuleDir: string;
-	methods: ReturnType<typeof collectRpcMethods>;
-	codecByMethod: Map<string, { methodName: string; exportBase: string; code: string }>;
-}): string {
-	const codecImports = options.methods
-		.map((method) => {
-			const codecModule = options.codecByMethod.get(method.methodName);
-			if (!codecModule) throw new Error(`Missing codec module for ${method.methodName}`);
-			return {
-				importName: `${codecModule.exportBase}Codec`,
-				path: `./${options.methodModuleDir}/${codecModule.exportBase}.codec.js`,
-				methodName: method.methodName,
-			};
-		})
-		.sort((a, b) => a.methodName.localeCompare(b.methodName));
-	return [
-		"// AUTO-GENERATED FILE. DO NOT EDIT.",
-		`import { createRpcCodecRegistry } from \"@nogg-aholic/nrpc\";`,
-		`import type { RpcMethodCodec } from \"@nogg-aholic/nrpc\";`,
-		...codecImports.map((entry) => `import { ${entry.importName} } from ${JSON.stringify(entry.path)};`),
-		"",
-		`export const ${options.globalName}CodecEntries: ReadonlyArray<readonly [string, RpcMethodCodec<any[], any>]> = [`,
-		...codecImports.map((entry) => `	[${JSON.stringify(entry.methodName)}, ${entry.importName}] as const,`),
-		`];`,
-		"",
-		`export const ${options.globalName}CodecRegistry = createRpcCodecRegistry(${options.globalName}CodecEntries);`,
+		`\t${options.globalName}CodecEntries,`,
+		`\t${options.globalName}CodecRegistry,`,
+		`\t${options.globalName}HttpRouteManifest,`,
+		`} from ${JSON.stringify(`./${path.basename(options.contractModulePath).replace(/\.contract\.js$/, "-auto-contract.js")}`)};`,
 		""
 	].join("\n");
 }

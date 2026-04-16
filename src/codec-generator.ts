@@ -52,6 +52,7 @@ export type TypeNodeShape =
 	| { kind: "primitive"; primitive: PrimitiveKind; numericKind?: NumericKind }
 	| { kind: "bigint" }
 	| { kind: "unknown" }
+	| { kind: "null" }
 	| { kind: "literal"; value: string | number | boolean }
 	| { kind: "undefined" }
 	| { kind: "optional"; inner: TypeNodeShape }
@@ -118,24 +119,33 @@ function isIntegerLikeName(name: string): boolean {
 	return /(^|_|-)(id|count|index|length|size|offset|version|timestamp|ms)$/.test(normalized);
 }
 
-export function normalizeType(type: ts.Type, checker: ts.TypeChecker, policies: Required<CodecPolicies>, propertyName?: string): TypeNodeShape {
+export function normalizeType(type: ts.Type, checker: ts.TypeChecker, policies: Required<CodecPolicies>, propertyName?: string, seen = new Set<number>()): TypeNodeShape {
 	type = unwrapPromiseLikeType(type, checker);
+	const typeId = typeof (type as ts.Type & { id?: unknown }).id === "number"
+		? ((type as ts.Type & { id?: number }).id as number)
+		: undefined;
+	if (typeId !== undefined) {
+		if (seen.has(typeId)) {
+			return { kind: "unknown" };
+		}
+		seen.add(typeId);
+	}
 
 	if ((type.flags & ts.TypeFlags.Union) !== 0) {
 		const union = type as ts.UnionType;
 		const nonUndefined = union.types.filter((entry) => (entry.flags & ts.TypeFlags.Undefined) === 0);
 		if (nonUndefined.length === 1 && nonUndefined.length !== union.types.length) {
-			return { kind: "optional", inner: normalizeType(nonUndefined[0]!, checker, policies, propertyName) };
+			return { kind: "optional", inner: normalizeType(nonUndefined[0]!, checker, policies, propertyName, seen) };
 		}
 
 		if (union.types.every((entry) => (entry.flags & (ts.TypeFlags.StringLiteral | ts.TypeFlags.NumberLiteral | ts.TypeFlags.BooleanLiteral)) !== 0)) {
 			return {
 				kind: "union",
-				variants: union.types.map((entry) => normalizeType(entry, checker, policies, propertyName))
+				variants: union.types.map((entry) => normalizeType(entry, checker, policies, propertyName, new Set(seen)))
 			};
 		}
 
-		const normalizedVariants = union.types.map((entry) => normalizeType(entry, checker, policies, propertyName));
+		const normalizedVariants = union.types.map((entry) => normalizeType(entry, checker, policies, propertyName, new Set(seen)));
 		const objectVariants = normalizedVariants.filter((entry): entry is Extract<TypeNodeShape, { kind: "object" }> => entry.kind === "object");
 		if (objectVariants.length === normalizedVariants.length) {
 			const discriminator = findDiscriminator(objectVariants);
@@ -159,6 +169,9 @@ export function normalizeType(type: ts.Type, checker: ts.TypeChecker, policies: 
 
 	if ((type.flags & ts.TypeFlags.BigIntLike) !== 0) {
 		return { kind: "bigint" };
+	}
+	if ((type.flags & ts.TypeFlags.Null) !== 0) {
+		return { kind: "null" };
 	}
 	if ((type.flags & ts.TypeFlags.TypeParameter) !== 0) {
 		return { kind: "unknown" };
@@ -206,8 +219,8 @@ export function normalizeType(type: ts.Type, checker: ts.TypeChecker, policies: 
 		if (!keyType || !valueType) throw new Error("Map missing key/value types.");
 		return {
 			kind: "map",
-			key: normalizeType(keyType, checker, policies),
-			value: normalizeType(valueType, checker, policies),
+			key: normalizeType(keyType, checker, policies, undefined, new Set(seen)),
+			value: normalizeType(valueType, checker, policies, undefined, new Set(seen)),
 			policy: policies.map
 		};
 	}
@@ -215,18 +228,29 @@ export function normalizeType(type: ts.Type, checker: ts.TypeChecker, policies: 
 		if (policies.set === "reject") throw new Error("Set encountered but set policy is reject.");
 		const [elementType] = checker.getTypeArguments(type as ts.TypeReference);
 		if (!elementType) throw new Error("Set missing element type.");
-		return { kind: "set", element: normalizeType(elementType, checker, policies), policy: policies.set };
+		return { kind: "set", element: normalizeType(elementType, checker, policies, undefined, new Set(seen)), policy: policies.set };
 	}
 
 	if (checker.isTupleType(type)) {
 		const tuple = type as ts.TupleType;
 		const elements = checker.getTypeArguments(tuple as ts.TypeReference);
-		return { kind: "tuple", elements: elements.map((entry) => normalizeType(entry, checker, policies)) };
+		return { kind: "tuple", elements: elements.map((entry) => normalizeType(entry, checker, policies, undefined, new Set(seen))) };
 	}
 	if (checker.isArrayType(type)) {
 		const [element] = checker.getTypeArguments(type as ts.TypeReference);
 		if (!element) throw new Error("Array type missing element type.");
-		return { kind: "array", element: normalizeType(element, checker, policies, propertyName) };
+		return { kind: "array", element: normalizeType(element, checker, policies, propertyName, new Set(seen)) };
+	}
+
+	const stringIndexType = checker.getIndexTypeOfType(type, ts.IndexKind.String);
+	if (stringIndexType) {
+		if (policies.map === "reject") throw new Error("String-indexed object encountered but map policy is reject.");
+		return {
+			kind: "map",
+			key: { kind: "primitive", primitive: "string" },
+			value: normalizeType(stringIndexType, checker, policies, undefined, new Set(seen)),
+			policy: policies.map,
+		};
 	}
 
 	const properties = checker.getPropertiesOfType(type);
@@ -241,7 +265,7 @@ export function normalizeType(type: ts.Type, checker: ts.TypeChecker, policies: 
 			}
 			normalizedProperties.push({
 				name: property.name,
-				shape: normalizeType(propertyType, checker, policies, property.name)
+				shape: normalizeType(propertyType, checker, policies, property.name, new Set(seen))
 			});
 		}
 		return {
@@ -285,8 +309,25 @@ function loopItemIdentifier(accessor: string): string {
 	return `__${base}Item`;
 }
 
+function mapValueIdentifier(accessor: string): string {
+	const base = sanitizeIdentifier(accessor.split(".").at(-1) ?? "mapValue");
+	return `__${base}MapValue`;
+}
+
 function unionMatchIdentifier(accessor: string): string {
 	return `__matched_${sanitizeIdentifier(accessor)}`;
+}
+
+function propertyAccessor(base: string, propertyName: string): string {
+	return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(propertyName)
+		? `${base}.${propertyName}`
+		: `${base}[${JSON.stringify(propertyName)}]`;
+}
+
+function propertyKey(propertyName: string): string {
+	return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(propertyName)
+		? propertyName
+		: JSON.stringify(propertyName);
 }
 
 export function emitWriteExpression(shape: TypeNodeShape, accessor: string): string[] {
@@ -305,6 +346,8 @@ export function emitWriteExpression(shape: TypeNodeShape, accessor: string): str
 			return [`writer.writeBigInt64(${accessor});`];
 		case "unknown":
 			return [`writer.writeString(JSON.stringify(${accessor} ?? null));`];
+		case "null":
+			return [];
 		case "literal":
 			return emitWriteExpression(literalToPrimitiveShape(shape), accessor);
 		case "optional":
@@ -319,20 +362,21 @@ export function emitWriteExpression(shape: TypeNodeShape, accessor: string): str
 				? [`writer.writeF64(${accessor}.getTime());`]
 				: [`writer.writeString(${accessor}.toISOString());`];
 		case "map":
+			const mapValueIdentifierName = mapValueIdentifier(accessor);
 			if (shape.policy === "entries") {
 				return [
 					`writer.writeU32(${accessor}.size);`,
-					`for (const [entryKey, entryValue] of ${accessor}.entries()) {`,
+					`for (const [entryKey, ${mapValueIdentifierName}] of ${accessor}.entries()) {`,
 					...emitWriteExpression(shape.key, "entryKey").map((line) => `\t${line}`),
-					...emitWriteExpression(shape.value, "entryValue").map((line) => `\t${line}`),
+					...emitWriteExpression(shape.value, mapValueIdentifierName).map((line) => `\t${line}`),
 					`}`
 				];
 			}
 			return [
 				`writer.writeU32(${accessor}.size);`,
-				`for (const [entryKey, entryValue] of ${accessor}.entries()) {`,
+				`for (const [entryKey, ${mapValueIdentifierName}] of ${accessor}.entries()) {`,
 				`\twriter.writeString(entryKey);`,
-				...emitWriteExpression(shape.value, "entryValue").map((line) => `\t${line}`),
+				...emitWriteExpression(shape.value, mapValueIdentifierName).map((line) => `\t${line}`),
 				`}`
 			];
 		case "set":
@@ -368,7 +412,7 @@ export function emitWriteExpression(shape: TypeNodeShape, accessor: string): str
 		case "tuple":
 			return shape.elements.flatMap((element, index) => emitWriteExpression(element, `(${accessor} as any)[${index}]`));
 		case "object":
-			return shape.properties.flatMap((property) => emitWriteExpression(property.shape, `${accessor}.${property.name}`));
+			return shape.properties.flatMap((property) => emitWriteExpression(property.shape, propertyAccessor(accessor, property.name)));
 	}
 }
 
@@ -388,6 +432,8 @@ export function emitReadExpression(shape: TypeNodeShape): string {
 			return "reader.readBigInt64()";
 		case "unknown":
 			return "JSON.parse(reader.readString())";
+		case "null":
+			return "null";
 		case "literal":
 			if (typeof shape.value === "string") {
 				return `(() => { const value = reader.readString(); if (value !== ${JSON.stringify(shape.value)}) throw new Error('Generated codec literal mismatch.'); return value; })()`;
@@ -428,7 +474,7 @@ export function emitReadExpression(shape: TypeNodeShape): string {
 		case "tuple":
 			return `[${shape.elements.map((element) => emitReadExpression(element)).join(", ")}]`;
 		case "object":
-			return `{ ${shape.properties.map((property) => `${property.name}: ${emitReadExpression(property.shape)}`).join(", ")} }`;
+			return `{ ${shape.properties.map((property) => `${propertyKey(property.name)}: ${emitReadExpression(property.shape)}`).join(", ")} }`;
 	}
 	throw new Error("Unsupported shape.");
 }
@@ -439,7 +485,22 @@ function emitUnionWriteExpression(shape: Extract<TypeNodeShape, { kind: "union" 
 	shape.variants.forEach((variant, index) => {
 		lines.push(`${index === 0 ? "if" : "else if"} (${emitTypeGuard(variant, accessor)}) {`);
 		lines.push(`\twriter.writeVariantIndex(${index});`);
-		lines.push(...emitWriteExpression(variant, accessor).map((line) => `\t${line}`));
+		if (variant.kind === "null") {
+			// Null is encoded by variant index only.
+		} else if (variant.kind === "literal") {
+			if (typeof variant.value === "string") {
+				lines.push(`\tconst __literalValue = ${accessor} as string;`);
+				lines.push(...emitWriteExpression(variant, "__literalValue").map((line) => `\t${line}`));
+			} else if (typeof variant.value === "number") {
+				lines.push(`\tconst __literalValue = ${accessor} as number;`);
+				lines.push(...emitWriteExpression(variant, "__literalValue").map((line) => `\t${line}`));
+			} else {
+				lines.push(`\tconst __literalValue = ${accessor} as boolean;`);
+				lines.push(...emitWriteExpression(variant, "__literalValue").map((line) => `\t${line}`));
+			}
+		} else {
+			lines.push(...emitWriteExpression(variant, accessor).map((line) => `\t${line}`));
+		}
 		lines.push(`\t${matchedIdentifier} = true;`);
 		lines.push("}");
 	});
@@ -495,6 +556,8 @@ function emitTypeGuard(shape: TypeNodeShape, accessor: string): string {
 			return `typeof ${accessor} === \"bigint\"`;
 		case "unknown":
 			return "true";
+		case "null":
+			return `${accessor} === null`;
 		case "literal":
 			return `${accessor} === ${JSON.stringify(shape.value)}`;
 		case "optional":
@@ -622,7 +685,7 @@ export function renderRpcCodecModule(options: RenderRpcCodecModuleOptions): stri
 		"\t},",
 		"\tdecode(data, offset = 0) {",
 		"\t\tconst reader = new GeneratedCodecReader(data, offset);",
-		`\t\tconst value = ${emitReadExpression(options.argsShape)} as ${options.argsTypeReference};`,
+		`\t\tconst value = ${emitReadExpression(options.argsShape)};`,
 		"\t\treturn [value, reader.offset];",
 		"\t}",
 		"};",
@@ -635,7 +698,7 @@ export function renderRpcCodecModule(options: RenderRpcCodecModuleOptions): stri
 		"\t},",
 		"\tdecode(data, offset = 0) {",
 		"\t\tconst reader = new GeneratedCodecReader(data, offset);",
-		`\t\tconst value = ${emitReadExpression(options.resultShape)} as ${options.resultTypeReference};`,
+		`\t\tconst value = ${emitReadExpression(options.resultShape)};`,
 		"\t\treturn [value, reader.offset];",
 		"\t}",
 		"};",
@@ -678,7 +741,7 @@ export function renderInlineRpcCodecMethod(options: RenderInlineRpcCodecMethodOp
 		"\t\t},",
 		"\t\tdecode(data, offset = 0) {",
 		"\t\t\tconst reader = new GeneratedCodecReader(data, offset);",
-		`\t\t\tconst value = ${emitReadExpression(options.argsShape)} as ${options.argsTypeReference};`,
+		`\t\t\tconst value = ${emitReadExpression(options.argsShape)};`,
 		"\t\t\treturn [value, reader.offset];",
 		"\t\t}",
 		"\t},",
@@ -690,7 +753,7 @@ export function renderInlineRpcCodecMethod(options: RenderInlineRpcCodecMethodOp
 		"\t\t},",
 		"\t\tdecode(data, offset = 0) {",
 		"\t\t\tconst reader = new GeneratedCodecReader(data, offset);",
-		`\t\t\tconst value = ${emitReadExpression(options.resultShape)} as ${options.resultTypeReference};`,
+		`\t\t\tconst value = ${emitReadExpression(options.resultShape)};`,
 		"\t\t\treturn [value, reader.offset];",
 		"\t\t}",
 		"\t}",
@@ -715,7 +778,7 @@ export function renderInlineRpcCodecExpression(options: Omit<RenderInlineRpcCode
 	const argsDecode = [
 		"decode(data, offset = 0) {",
 		"\tconst reader = new GeneratedCodecReader(data, offset);",
-		`\tconst value = ${emitReadExpression(options.argsShape)} as ${options.argsTypeReference};`,
+		`\tconst value = ${emitReadExpression(options.argsShape)};`,
 		"\treturn [value, reader.offset];",
 		"}"
 	].join("\n");
@@ -729,7 +792,7 @@ export function renderInlineRpcCodecExpression(options: Omit<RenderInlineRpcCode
 	const resultDecode = [
 		"decode(data, offset = 0) {",
 		"\tconst reader = new GeneratedCodecReader(data, offset);",
-		`\tconst value = ${emitReadExpression(options.resultShape)} as ${options.resultTypeReference};`,
+		`\tconst value = ${emitReadExpression(options.resultShape)};`,
 		"\treturn [value, reader.offset];",
 		"}"
 	].join("\n");
@@ -776,6 +839,53 @@ export type CollectedRpcMethod = {
 	resultType: ts.Type;
 };
 
+function collectDeclaredChildSymbols(symbol: ts.Symbol, checker: ts.TypeChecker): ts.Symbol[] {
+	const seen = new Map<string, ts.Symbol>();
+	const declarations = symbol.declarations ?? [];
+	for (const declaration of declarations) {
+		if (ts.isModuleDeclaration(declaration)) {
+			const moduleSymbol = checker.getSymbolAtLocation(declaration.name);
+			for (const candidate of moduleSymbol?.exports?.values() ?? []) {
+				seen.set(candidate.getName(), candidate);
+			}
+			continue;
+		}
+
+		if (ts.isSourceFile(declaration)) {
+			const moduleSymbol = checker.getSymbolAtLocation(declaration);
+			for (const candidate of moduleSymbol?.exports?.values() ?? []) {
+				seen.set(candidate.getName(), candidate);
+			}
+			continue;
+		}
+
+		if (ts.isVariableDeclaration(declaration) || ts.isPropertyDeclaration(declaration) || ts.isPropertySignature(declaration) || ts.isPropertyAssignment(declaration) || ts.isShorthandPropertyAssignment(declaration)) {
+			const initializer = ts.isShorthandPropertyAssignment(declaration)
+				? declaration.name
+				: ts.isVariableDeclaration(declaration) || ts.isPropertyDeclaration(declaration) || ts.isPropertyAssignment(declaration)
+					? declaration.initializer
+					: undefined;
+			if (initializer) {
+				const initializerType = checker.getTypeAtLocation(initializer);
+				for (const candidate of checker.getPropertiesOfType(initializerType)) {
+					seen.set(candidate.getName(), candidate);
+				}
+			}
+			continue;
+		}
+
+		if (ts.isTypeLiteralNode(declaration) || ts.isInterfaceDeclaration(declaration)) {
+			for (const member of declaration.members) {
+				const memberSymbol = member.name ? checker.getSymbolAtLocation(member.name) : undefined;
+				if (memberSymbol) {
+					seen.set(memberSymbol.getName(), memberSymbol);
+				}
+			}
+		}
+	}
+	return [...seen.values()];
+}
+
 export function collectRpcMethods(
 	rootType: ts.Type,
 	checker: ts.TypeChecker,
@@ -783,39 +893,90 @@ export function collectRpcMethods(
 	pathParts: string[] = []
 ): CollectedRpcMethod[] {
 	const out: CollectedRpcMethod[] = [];
-	for (const property of checker.getPropertiesOfType(rootType)) {
+	const declaredProperties = rootType.getSymbol() ? collectDeclaredChildSymbols(rootType.getSymbol()!, checker) : [];
+	const resolvedProperties = checker.getPropertiesOfType(rootType);
+	const properties = new Map<string, ts.Symbol>();
+	for (const property of declaredProperties) {
+		properties.set(property.getName(), property);
+	}
+	for (const property of resolvedProperties) {
+		properties.set(property.getName(), property);
+	}
+	for (const property of properties.values()) {
+		if (property.name === "__nrpcMethodName") continue;
+		if (property.name === "then") continue;
 		const declaration = property.valueDeclaration ?? property.declarations?.[0];
 		if (!declaration) continue;
+		if (ts.isPropertySignature(declaration) || ts.isMethodSignature(declaration) || ts.isPropertyDeclaration(declaration) || ts.isMethodDeclaration(declaration) || ts.isVariableDeclaration(declaration)) {
+			const declaredTypeNode = declaration.type;
+			if (declaredTypeNode && ts.isFunctionTypeNode(declaredTypeNode)) {
+				const declaredSignature = checker.getSignatureFromDeclaration(declaredTypeNode);
+				if (declaredSignature) {
+					const nextPath = [...pathParts, property.name];
+					out.push({
+						path: nextPath,
+						methodName: nextPath.join("."),
+						parameterNames: declaredSignature.getParameters().map((parameter, index) => {
+							const rawName = parameter.name || `arg${index}`;
+							const sanitized = rawName.replace(/[^A-Za-z0-9_$]/g, "_");
+							return sanitized.length > 0 ? sanitized : `arg${index}`;
+						}),
+						argsShape: {
+							kind: "tuple",
+							elements: declaredSignature.getParameters().map((parameter, index) => {
+								const parameterDeclaration = parameter.valueDeclaration ?? parameter.declarations?.[0];
+								if (!parameterDeclaration) throw new Error(`Missing declaration for parameter ${parameter.name}.`);
+								const parameterType = checker.getTypeOfSymbolAtLocation(parameter, parameterDeclaration);
+								const normalized = normalizeType(parameterType, checker, policies, parameter.name);
+								const isOptionalParameter = ts.isParameter(parameterDeclaration)
+									? !!parameterDeclaration.questionToken || !!parameterDeclaration.initializer || !!parameterDeclaration.dotDotDotToken
+									: false;
+								return isOptionalParameter && normalized.kind !== "optional"
+									? { kind: "optional", inner: normalized }
+									: normalized;
+							})
+						},
+						resultType: checker.getReturnTypeOfSignature(declaredSignature)
+					});
+					continue;
+				}
+			}
+		}
 		const propertyType = checker.getTypeOfSymbolAtLocation(property, declaration);
 		const nextPath = [...pathParts, property.name];
 		const signatures = checker.getSignaturesOfType(propertyType, ts.SignatureKind.Call);
 		if (signatures.length > 0) {
 			const signature = signatures[0]!;
-			out.push({
-				path: nextPath,
-				methodName: nextPath.join("."),
-				parameterNames: signature.getParameters().map((parameter, index) => {
-					const rawName = parameter.name || `arg${index}`;
-					const sanitized = rawName.replace(/[^A-Za-z0-9_$]/g, "_");
-					return sanitized.length > 0 ? sanitized : `arg${index}`;
-				}),
-				argsShape: {
-					kind: "tuple",
-					elements: signature.getParameters().map((parameter, index) => {
-						const parameterDeclaration = parameter.valueDeclaration ?? parameter.declarations?.[0];
-						if (!parameterDeclaration) throw new Error(`Missing declaration for parameter ${parameter.name}.`);
-						const parameterType = checker.getTypeOfSymbolAtLocation(parameter, parameterDeclaration);
-						const normalized = normalizeType(parameterType, checker, policies, parameter.name);
-						const isOptionalParameter = ts.isParameter(parameterDeclaration)
-							? !!parameterDeclaration.questionToken || !!parameterDeclaration.initializer || !!parameterDeclaration.dotDotDotToken
-							: false;
-						return isOptionalParameter && normalized.kind !== "optional"
-							? { kind: "optional", inner: normalized }
-							: normalized;
-					})
-				},
-				resultType: checker.getReturnTypeOfSignature(signature)
-			});
+			try {
+				out.push({
+					path: nextPath,
+					methodName: nextPath.join("."),
+					parameterNames: signature.getParameters().map((parameter, index) => {
+						const rawName = parameter.name || `arg${index}`;
+						const sanitized = rawName.replace(/[^A-Za-z0-9_$]/g, "_");
+						return sanitized.length > 0 ? sanitized : `arg${index}`;
+					}),
+					argsShape: {
+						kind: "tuple",
+						elements: signature.getParameters().map((parameter, index) => {
+							const parameterDeclaration = parameter.valueDeclaration ?? parameter.declarations?.[0];
+							if (!parameterDeclaration) throw new Error(`Missing declaration for parameter ${parameter.name}.`);
+							const parameterType = checker.getTypeOfSymbolAtLocation(parameter, parameterDeclaration);
+							const normalized = normalizeType(parameterType, checker, policies, parameter.name);
+							const isOptionalParameter = ts.isParameter(parameterDeclaration)
+								? !!parameterDeclaration.questionToken || !!parameterDeclaration.initializer || !!parameterDeclaration.dotDotDotToken
+								: false;
+							return isOptionalParameter && normalized.kind !== "optional"
+								? { kind: "optional", inner: normalized }
+								: normalized;
+						})
+					},
+					resultType: checker.getReturnTypeOfSignature(signature)
+				});
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				throw new Error(`Failed to collect RPC method ${nextPath.join(".")}: ${message}`);
+			}
 			continue;
 		}
 		out.push(...collectRpcMethods(propertyType, checker, policies, nextPath));
@@ -828,38 +989,6 @@ export function unwrapPromiseLikeType(type: ts.Type, checker: ts.TypeChecker): t
 	if (symbolName === "Promise" || symbolName === "PromiseLike" || symbolName === "Thenable") {
 		const [inner] = checker.getTypeArguments(type as ts.TypeReference);
 		if (inner) return inner;
-	}
-
-	const apparentType = checker.getApparentType(type);
-	const apparentSymbolName = apparentType.getSymbol()?.getName() ?? apparentType.aliasSymbol?.getName();
-	if (apparentSymbolName === "Promise" || apparentSymbolName === "PromiseLike" || apparentSymbolName === "Thenable") {
-		const [inner] = checker.getTypeArguments(apparentType as ts.TypeReference);
-		if (inner) return inner;
-	}
-
-	const thenProperty = checker.getPropertyOfType(type, "then");
-	if (thenProperty) {
-		const declaration = thenProperty.valueDeclaration ?? thenProperty.declarations?.[0];
-		if (declaration) {
-			const thenType = checker.getTypeOfSymbolAtLocation(thenProperty, declaration);
-			const thenSignatures = checker.getSignaturesOfType(thenType, ts.SignatureKind.Call);
-			for (const thenSignature of thenSignatures) {
-				const onFulfilledParameter = thenSignature.getParameters?.()[0];
-				const parameterDeclaration = onFulfilledParameter?.valueDeclaration ?? onFulfilledParameter?.declarations?.[0];
-				if (!onFulfilledParameter || !parameterDeclaration) {
-					continue;
-				}
-				const onFulfilledType = checker.getTypeOfSymbolAtLocation(onFulfilledParameter, parameterDeclaration);
-				const callbackSignatures = checker.getSignaturesOfType(onFulfilledType, ts.SignatureKind.Call);
-				for (const callbackSignature of callbackSignatures) {
-					const resolvedParameter = callbackSignature.getParameters?.()[0];
-					const resolvedDeclaration = resolvedParameter?.valueDeclaration ?? resolvedParameter?.declarations?.[0];
-					if (resolvedParameter && resolvedDeclaration) {
-						return checker.getTypeOfSymbolAtLocation(resolvedParameter, resolvedDeclaration);
-					}
-				}
-			}
-		}
 	}
 	return type;
 }

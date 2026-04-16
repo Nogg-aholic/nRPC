@@ -12,6 +12,7 @@ import {
 	createHttpRouteMatcher,
 	type HttpRouteMatch,
 	type HttpRouteManifest,
+	routeSupportsProtocol,
 	type RpcCodecResolver,
 } from "./http-route-runtime.js";
 import type { RpcMethodCodec } from "./types.js";
@@ -291,7 +292,6 @@ export function createFetchRpcSurface<T>(
 }
 
 export function createSyntheticRouteCaller(options: SyntheticRouteCallerOptions) {
-	const matchRoute = createHttpRouteMatcher(options.manifest);
 	const fetchImpl = options.fetch ?? fetch;
 	const jsonRequestInitFactory = options.jsonRequestInitFactory ?? ((context: SyntheticJsonRequestContext): RequestInit => ({
 		method: "POST",
@@ -317,13 +317,14 @@ export function createSyntheticRouteCaller(options: SyntheticRouteCallerOptions)
 		}
 		return payload as TResult;
 	});
+	const routeEntriesByMethod = new Map(options.manifest.routes.map((entry) => [entry.methodName, entry] as const));
 
 	function getRoute(methodName: string, protocol: "json" | "binary"): HttpRouteMatch["entry"] {
-		const route = matchRoute(`${options.manifest.basePath || ""}/${methodName.replace(/\./g, "/")}${protocol === "binary" ? ".nrpc" : ""}`.replace(/\/+/g, "/"));
-		if (!route) {
+		const route = routeEntriesByMethod.get(methodName);
+		if (!route || !routeSupportsProtocol(route, protocol)) {
 			throw new Error(`Missing synthetic route for ${methodName}`);
 		}
-		return route.entry;
+		return route;
 	}
 
 	return {
