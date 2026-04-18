@@ -86,7 +86,12 @@ export function decodeRpcCallMessageWithCodec(data: Uint8Array, codec?: RpcMetho
   const methodName = decoder.decode(data.subarray(offset, offset + methodNameLen));
   offset += methodNameLen;
 
-  const [args] = decodePayloadWithCodec(data, offset, codec?.args as RpcPayloadCodec<unknown> | undefined);
+  // When no codec is supplied (e.g. a header-only probe to discover the methodName before
+  // resolving its codec), the args section may have been encoded with a generated codec
+  // and is therefore not safely decodable via the generic value codec — skip it.
+  const args = codec
+    ? decodePayloadWithCodec(data, offset, codec.args as RpcPayloadCodec<unknown> | undefined)[0]
+    : undefined;
   return { eventCode: data[0] ?? 0, componentId, methodName, args };
 }
 
@@ -179,7 +184,12 @@ export function decodeRpcAwaitMessageWithCodec(data: Uint8Array, codec?: RpcMeth
   const methodName = decoder.decode(data.subarray(offset, offset + methodNameLen));
   offset += methodNameLen;
 
-  const [args] = decodePayloadWithCodec(data, offset, codec?.args as RpcPayloadCodec<unknown> | undefined);
+  // When no codec is supplied (e.g. a header-only probe to discover the methodName before
+  // resolving its codec), the args section may have been encoded with a generated codec
+  // and is therefore not safely decodable via the generic value codec — skip it.
+  const args = codec
+    ? decodePayloadWithCodec(data, offset, codec.args as RpcPayloadCodec<unknown> | undefined)[0]
+    : undefined;
   return { eventCode: data[0] ?? 0, requestId, componentId, methodName, args };
 }
 
