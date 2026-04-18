@@ -7,3 +7,7 @@ export * from './generated-codec-runtime.js';
 export * from './http-route-runtime.js';
 export * from './web-runtime.js';
 export * from './upstream-proxy-injection.js';
+export * from './docs.js';
+export * from './openapi-types.js';
+export * from './scalar-html.js';
+export * from './openapi-generator.js';

@@ -237,6 +237,8 @@ export function decodeRpcReturnMessageWithCodec(data: Uint8Array, codec?: RpcMet
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const requestId = view.getUint32(1, true);
   const ok = data[5] === 1;
-  const [payload] = decodePayloadWithCodec(data, 6, codec?.result as RpcPayloadCodec<unknown> | undefined);
+  const [payload] = ok
+    ? decodePayloadWithCodec(data, 6, codec?.result as RpcPayloadCodec<unknown> | undefined)
+    : decodeRpcValue(data, 6);
   return { eventCode: data[0] ?? 0, requestId, ok, payload };
 }

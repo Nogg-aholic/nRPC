@@ -1,7 +1,7 @@
 {
   "name": "@nogg-aholic/nrpc",
   "description": "Small binary RPC codec for compact value encoding and generic RPC message framing.",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "homepage": "https://github.com/Nogg-aholic/nRPC#readme",
   "license": "MIT",
   "type": "module",
@@ -37,6 +37,22 @@
     "./http-route-generator": {
       "types": "./dist/http-route-generator.d.ts",
       "import": "./dist/http-route-generator.js"
+    },
+    "./docs": {
+      "types": "./dist/docs.d.ts",
+      "import": "./dist/docs.js"
+    },
+    "./openapi-types": {
+      "types": "./dist/openapi-types.d.ts",
+      "import": "./dist/openapi-types.js"
+    },
+    "./scalar-html": {
+      "types": "./dist/scalar-html.d.ts",
+      "import": "./dist/scalar-html.js"
+    },
+    "./openapi-generator": {
+      "types": "./dist/openapi-generator.d.ts",
+      "import": "./dist/openapi-generator.js"
     },
     "./http-route-runtime": {
       "types": "./dist/http-route-runtime.d.ts",
@@ -105,7 +121,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/node": "^25.5.2",
-    "typescript": "^6.0.2"
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.3"
   }
 }
