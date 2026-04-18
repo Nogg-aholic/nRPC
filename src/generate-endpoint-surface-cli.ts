@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import path from "node:path";
+import { generateDocsArtifacts, renderGeneratedDocsArtifactsModule } from "./docs.js";
 import { generateEndpointSurface } from "./endpoint-surface-generator.js";
 
 function readArg(flag: string): string | undefined {
@@ -46,9 +47,20 @@ const result = generateEndpointSurface({
 	}
 });
 
-for (const file of result.files) {
-	await Bun.write(file.path, file.content);
-}
+const docsArtifacts = generateDocsArtifacts({
+	entryFile: resolvedInputPath,
+	rootType,
+	rootPath,
+	basePath: "/",
+	policies: {
+		date: datePolicy,
+		map: mapPolicy,
+		set: setPolicy,
+	}
+});
 
-await Bun.write(resolvedOutputPath.replace(/\.ts$/, ".globals.d.ts"), result.declarationText);
-await Bun.write(resolvedOutputPath.replace(/\.ts$/, ".surface-definition.ts"), result.surfaceDefinitionText);
+await Bun.write(resolvedOutputPath.replace(/\.surface\.ts$/, ".contract.ts"), result.contractText);
+await Bun.write(
+	resolvedOutputPath.replace(/\.surface\.ts$/, ".surface.docs.ts"),
+	renderGeneratedDocsArtifactsModule(docsArtifacts),
+);

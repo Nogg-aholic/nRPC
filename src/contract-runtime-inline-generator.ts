@@ -29,7 +29,24 @@ const preludeSourceSpecs: RuntimeSourceSpec[] = [
 	},
 	{
 		path: "generated-codec-runtime.ts",
-		names: ["textEncoder", "textDecoder", "GeneratedCodecWriter", "GeneratedCodecReader"],
+		names: [
+			"GeneratedCodecLiteral",
+			"GeneratedCodecNumericKind",
+			"GeneratedCodecPrimitiveKind",
+			"GeneratedCodecTypedArrayKind",
+			"GeneratedCodecShape",
+			"textEncoder",
+			"textDecoder",
+			"generatedCodecLiteralToPrimitiveShape",
+			"isGeneratedCodecTypedArrayInstance",
+			"GeneratedCodecWriter",
+			"GeneratedCodecReader",
+			"writeGeneratedCodecShape",
+			"readGeneratedCodecShape",
+			"isGeneratedCodecShapeMatch",
+			"createGeneratedPayloadCodec",
+			"createGeneratedRpcMethodCodec",
+		],
 	},
 ];
 

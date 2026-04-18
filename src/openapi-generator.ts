@@ -7,6 +7,7 @@ import {
 	normalizeType,
 	type CodecPolicies,
 	type TypeNodeShape,
+	type VirtualProgramSource,
 	unwrapPromiseLikeType,
 } from "./codec-generator.js";
 import { generateHttpRouteManifest } from "./http-route-generator.js";
@@ -23,6 +24,7 @@ export type GenerateOpenApiDocumentOptions = {
 	description?: string;
 	policies?: CodecPolicies;
 	docs?: Record<string, OpenApiMethodDocs>;
+	virtualSources?: readonly VirtualProgramSource[];
 };
 
 export type GenerateOpenApiArtifactsOptions = GenerateOpenApiDocumentOptions & {
@@ -65,7 +67,10 @@ export function buildOpenApiMethodDocument(
 
 export function generateOpenApiMethodProjections(options: GenerateOpenApiDocumentOptions): OpenApiMethodProjection[] {
 	const policies = defaultPolicies(options.policies);
-	const program = createProgram(options.entryFile);
+	const program = createProgram({
+		entryFile: options.entryFile,
+		virtualSources: options.virtualSources,
+	});
 	const checker = program.getTypeChecker();
 	const sourceFile = program.getSourceFile(options.entryFile);
 	if (!sourceFile) throw new Error(`Could not load source file ${options.entryFile}`);
@@ -79,6 +84,7 @@ export function generateOpenApiMethodProjections(options: GenerateOpenApiDocumen
 		basePath: options.basePath,
 		protocolMode: "both",
 		policies: options.policies,
+		virtualSources: options.virtualSources,
 	});
 	const routeByMethod = new Map(manifest.routes.map((route) => [route.methodName, route]));
 

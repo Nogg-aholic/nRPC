@@ -27,6 +27,16 @@ export type GenerateRpcSurfaceCodecOptions = {
 	policies?: CodecPolicies;
 };
 
+export type VirtualProgramSource = {
+	filePath: string;
+	content: string;
+};
+
+export type ProgramInput = {
+	entryFile: string;
+	virtualSources?: readonly VirtualProgramSource[];
+};
+
 export type GeneratedRpcSurfaceCodecModule = {
 	methodName: string;
 	exportBase: string;
@@ -85,16 +95,67 @@ const typedArrayNames = new Set<TypedArrayKind>([
 	"BigUint64Array"
 ]);
 
-export function createProgram(entryFile: string): ts.Program {
+export function createProgram(entryFileOrInput: string | ProgramInput): ts.Program {
+	const input = typeof entryFileOrInput === "string"
+		? { entryFile: entryFileOrInput }
+		: entryFileOrInput;
+	const compilerOptions: ts.CompilerOptions = {
+		target: ts.ScriptTarget.ES2022,
+		module: ts.ModuleKind.ESNext,
+		moduleResolution: ts.ModuleResolutionKind.Bundler,
+		strict: true,
+		skipLibCheck: true,
+	};
+	const defaultHost = ts.createCompilerHost(compilerOptions, true);
+	const toCanonicalPath = (value: string) => {
+		const normalized = path.normalize(value);
+		const canonical = defaultHost.getCanonicalFileName(normalized);
+		return ts.sys.useCaseSensitiveFileNames ? canonical : canonical.toLowerCase();
+	};
+	const virtualSources = new Map((input.virtualSources ?? []).map((source) => [toCanonicalPath(source.filePath), source] as const));
+	if (virtualSources.size === 0) {
+		return ts.createProgram({
+			rootNames: [input.entryFile],
+			options: compilerOptions,
+		});
+	}
+
+	const host: ts.CompilerHost = {
+		...defaultHost,
+		fileExists(fileName) {
+			return virtualSources.has(toCanonicalPath(fileName)) || defaultHost.fileExists(fileName);
+		},
+		readFile(fileName) {
+			const virtualSource = virtualSources.get(toCanonicalPath(fileName));
+			if (virtualSource) return virtualSource.content;
+			return defaultHost.readFile(fileName);
+		},
+		getSourceFile(fileName, languageVersionOrOptions, onError, shouldCreateNewSourceFile) {
+			const virtualSource = virtualSources.get(toCanonicalPath(fileName));
+			if (virtualSource) {
+				return ts.createSourceFile(fileName, virtualSource.content, languageVersionOrOptions, true, ts.ScriptKind.TS);
+			}
+			return defaultHost.getSourceFile(fileName, languageVersionOrOptions, onError, shouldCreateNewSourceFile);
+		},
+		resolveModuleNames(moduleNames, containingFile, _reusedNames, redirectedReference, options) {
+			return moduleNames.map((moduleName) => {
+				const resolved = ts.resolveModuleName(moduleName, containingFile, options, {
+					fileExists: host.fileExists,
+					readFile: host.readFile,
+					realpath: defaultHost.realpath,
+					directoryExists: defaultHost.directoryExists?.bind(defaultHost),
+					getCurrentDirectory: defaultHost.getCurrentDirectory,
+					getDirectories: defaultHost.getDirectories?.bind(defaultHost),
+				}).resolvedModule;
+				return resolved;
+			});
+		},
+	};
+
 	return ts.createProgram({
-		rootNames: [entryFile],
-		options: {
-			target: ts.ScriptTarget.ES2022,
-			module: ts.ModuleKind.ESNext,
-			moduleResolution: ts.ModuleResolutionKind.Bundler,
-			strict: true,
-			skipLibCheck: true
-		}
+		rootNames: [input.entryFile],
+		options: compilerOptions,
+		host,
 	});
 }
 

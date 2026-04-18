@@ -17,6 +17,14 @@ export type RpcSymbolRef = RpcMethodRefMetadata | RpcMethodRef<any[], any>;
 
 export type RpcMethodRef<Args extends any[] = any[], Result = any> =
   ((...args: Args) => Promise<Awaited<Result>>) & RpcMethodRefMetadata;
+export type RpcMethodCodecFromRef<TMethod extends RpcMethodRef<any[], any>> =
+  TMethod extends RpcMethodRef<infer Args, infer Result>
+    ? RpcMethodCodec<Args, Result>
+    : never;
+export type RpcMethodRefFromCallable<TCallable extends (...args: any[]) => Promise<any>> =
+  RpcMethodRef<Parameters<TCallable>, Awaited<ReturnType<TCallable>>>;
+export type RpcMethodCallerFromCallable<TCallable extends (...args: any[]) => Promise<any>> =
+  (method: RpcMethodRefFromCallable<TCallable>, ...args: Parameters<TCallable>) => ReturnType<TCallable>;
 export type RpcMethodCaller = <TArgs extends any[] = any[], TResult = any>(
   method: RpcMethodRef<TArgs, TResult>,
   ...args: TArgs
@@ -76,6 +84,12 @@ export function createNamedRpcMethodRef<TArgs extends any[] = any[], TResult = a
 
   defineMethodRefMetadata(ref as object, methodName);
   return ref;
+}
+
+export function defineRpcMethodRef<TCallable extends (...args: any[]) => Promise<any>>(
+  callable: TCallable,
+): RpcMethodRefFromCallable<TCallable> {
+  return callable as RpcMethodRefFromCallable<TCallable>;
 }
 
 export function withRpcMethodCodec<TArgs extends any[] = any[], TResult = any>(

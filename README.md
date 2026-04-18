@@ -309,7 +309,7 @@ export type ServerApi = {
 };
 ```
 
-Generate the full surface:
+Generate the exportable artifacts:
 
 ```bash
 nrpc-generate-endpoint-surface \
@@ -322,40 +322,12 @@ nrpc-generate-endpoint-surface \
 
 That emits:
 
-- `server-api.surface.ts`
-- `server-api.codec-registry.ts`
-- `server-api.surface.globals.d.ts`
-- `server-api.codecs/*.codec.ts`
+- `server-api.contract.ts`
+- `server-api.surface.docs.ts`
 
-The generated surface module creates one typed endpoint surface from the reflected root contract and resolves codecs by method name under the hood.
+The contract file contains the typed RPC definition, shape-based codec registry, and HTTP route manifest.
 
-So consumers can treat the namespace as direct endpoints:
-
-```ts
-import { apiRpcSurface } from './generated/server-api.surface.js';
-
-const user = await callOnServerAsync(apiRpcSurface.users.byId, '42');
-const result = await callOnServerAsync(apiRpcSurface.users.search, { text: 'abc' });
-```
-
-And if you want globals, install the generated runtime and declaration outputs through your existing synthetic-surface pipeline.
-
-Current shape of the generated endpoint surface flow:
-
-- input: reflected root contract type
-- output: endpoint surface + method codecs + codec registry + optional host/global install artifacts
-
-This is the right path when your server already exposes a namespace of methods and you want `nRPC` to generate both the client typing surface and the performant transport codecs from that single source of truth.
-
-Server-side codec lookup should use the generated registry directly:
-
-```ts
-import { serverApiCodecRegistry } from './generated/server-api.codec-registry.js';
-
-const codec = serverApiCodecRegistry(methodName);
-```
-
-Do not hand-register every endpoint one by one. If you already generated a namespace surface, the registry should be generated from that same contract root.
+This is the right path when your server already exposes a namespace of methods and you want one generated contract artifact plus one docs artifact from that single source of truth.
 
 ### Bun Server Example
 
@@ -364,9 +336,9 @@ There is a runnable example in [examples/nrpc-bun-server](../examples/nrpc-bun-s
 It shows this flow end to end:
 
 - define a namespace-style contract type
-- generate a typed endpoint surface, per-method codecs, and a codec registry
+- generate one typed contract and one docs artifact
 - serve a Bun HTTP endpoint that dispatches by generated method name
-- call the generated client surface over binary `nRPC` frames
+- call the generated contract over binary `nRPC` frames
 
 Contract:
 
@@ -391,10 +363,8 @@ bun run generate
 
 That emits:
 
-- `src/generated/demo-api.surface.ts`
-- `src/generated/api.codec-registry.ts`
-- `src/generated/demo-api.surface.globals.d.ts`
-- `src/generated/api.codecs/*.codec.ts`
+- `src/generated/demo-api.contract.ts`
+- `src/generated/demo-api.surface.docs.ts`
 
 Start the server:
 

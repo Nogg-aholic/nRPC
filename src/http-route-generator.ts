@@ -1,4 +1,4 @@
-import type { CodecPolicies } from "./codec-generator.js";
+import type { CodecPolicies, VirtualProgramSource } from "./codec-generator.js";
 import { camelize, collectRpcMethods, createProgram, defaultPolicies, getTypeFromExportedAlias } from "./codec-generator.js";
 import type { HttpProtocolMode, HttpRouteManifest, HttpRouteManifestEntry } from "./http-route-runtime.js";
 
@@ -9,6 +9,7 @@ export type GenerateHttpRouteManifestOptions = {
 	basePath?: string;
 	protocolMode?: HttpProtocolMode;
 	policies?: CodecPolicies;
+	virtualSources?: readonly VirtualProgramSource[];
 };
 
 export type GeneratedHttpRouteManifestEntry = HttpRouteManifestEntry;
@@ -17,7 +18,10 @@ export type GeneratedHttpRouteManifest = HttpRouteManifest;
 
 export function generateHttpRouteManifest(options: GenerateHttpRouteManifestOptions): GeneratedHttpRouteManifest {
 	const policies = defaultPolicies(options.policies);
-	const program = createProgram(options.entryFile);
+	const program = createProgram({
+		entryFile: options.entryFile,
+		virtualSources: options.virtualSources,
+	});
 	const checker = program.getTypeChecker();
 	const sourceFile = program.getSourceFile(options.entryFile);
 	if (!sourceFile) throw new Error(`Could not load source file ${options.entryFile}`);
