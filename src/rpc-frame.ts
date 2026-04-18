@@ -133,6 +133,19 @@ export function decodeRpcAwaitMessage(data: Uint8Array, expectedEventCode?: numb
   return { eventCode: data[0] ?? 0, requestId, componentId, methodName, args };
 }
 
+export function decodeRpcAwaitMethodName(data: Uint8Array, expectedEventCode?: number): string {
+  if (expectedEventCode !== undefined && data[0] !== expectedEventCode) {
+    throw new Error(`Unexpected RPC await event: ${data[0]}`);
+  }
+
+  let offset = 1 + 4;
+  const componentIdLen = data[offset++] ?? 0;
+  offset += componentIdLen;
+
+  const methodNameLen = data[offset++] ?? 0;
+  return decoder.decode(data.subarray(offset, offset + methodNameLen));
+}
+
 export function encodeRpcAwaitMessageWithCodec(
   eventCode: number,
   requestId: number,

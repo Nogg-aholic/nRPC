@@ -1,4 +1,5 @@
 import {
+	decodeRpcAwaitMethodName,
 	decodeRpcReturnMessage,
 	decodeRpcReturnMessageWithCodec,
 	decodeRpcAwaitMessageWithCodec,
@@ -163,8 +164,8 @@ export function createRpcFetchRequestHandler(options: CreateRpcFetchHandlerOptio
 	return async (request: Request) => {
 		const body = await readRequestBytes(request);
 		try {
-			const genericFrame = decodeRpcAwaitMessageWithCodec(body, undefined, options.awaitEventCode);
-			const codec = options.codecResolver(genericFrame.methodName);
+			const methodName = decodeRpcAwaitMethodName(body, options.awaitEventCode);
+			const codec = options.codecResolver(methodName);
 			const frame = decodeRpcAwaitMessageWithCodec(body, codec, options.awaitEventCode);
 			const args = Array.isArray(frame.args) ? frame.args : [];
 			const result = await options.invokeMethod(frame.methodName, args);

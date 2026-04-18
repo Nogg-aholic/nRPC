@@ -37,6 +37,25 @@ export function createTypedArray(
   byteLength: number,
   arrayType: TypedArrayType,
 ): TypedArrayTypes {
+  const requiresAlignment =
+    arrayType !== TypedArrayType.Int8 &&
+    arrayType !== TypedArrayType.Uint8 &&
+    arrayType !== TypedArrayType.Uint8Clamped;
+
+  if (requiresAlignment) {
+    const bytesPerElement =
+      arrayType === TypedArrayType.Int16 || arrayType === TypedArrayType.Uint16 ? 2
+        : arrayType === TypedArrayType.Int32 || arrayType === TypedArrayType.Uint32 || arrayType === TypedArrayType.Float32 ? 4
+        : 8;
+    const misaligned = byteOffset % bytesPerElement !== 0;
+    if (misaligned) {
+      const copied = new Uint8Array(byteLength);
+      copied.set(new Uint8Array(buffer, byteOffset, byteLength));
+      buffer = copied.buffer;
+      byteOffset = 0;
+    }
+  }
+
   switch (arrayType) {
     case TypedArrayType.Int8:
       return new Int8Array(buffer, byteOffset, byteLength);
