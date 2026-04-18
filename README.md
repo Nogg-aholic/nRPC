@@ -4,6 +4,78 @@
 
 It extracts the reusable part of the transport layer: binary value encoding, compact RPC message framing, and typed callable references that can be resolved by a higher-level runtime. It does not know anything about component lookup, method dispatch, websocket ownership, retries, or application semantics.
 
+## Why nRPC Exists
+
+The main reason to use `nRPC` is not abstract protocol purity. It is moving real application objects that contain buffer-like data without forcing them through JSON.
+
+JSON is fine for ordinary object payloads, but it becomes a bad transport once the object graph starts carrying things like:
+
+- `Uint8Array`
+- `Float32Array`
+- `Uint32Array`
+- mixed objects that contain normal metadata plus one or more large typed arrays
+
+At that point, JSON typically turns binary-friendly data into one of the following:
+
+- large numeric arrays
+- base64 strings
+- secondary encoded blobs that still need extra parsing
+
+That adds the exact overhead you usually do not want:
+
+- larger payloads on the wire
+- more serialization work on the server
+- more parsing work on the client
+- more allocations during encode and decode
+
+`nRPC` exists to keep those values in a compact binary representation and to preserve typed-array semantics instead of flattening everything into text.
+
+This is the core use case.
+
+It is not primarily about beating JSON for tiny CRUD payloads. It is about avoiding JSON's worst behavior when transporting object envelopes that contain buffer-heavy fields.
+
+## Why It Matters In Practice
+
+The benchmark in the [`nrpc-bun-server` repository](https://github.com/Nogg-aholic/nrpc-bun-server/tree/main/benchmark) shows the intended usage clearly.
+
+Two high-level results stand out:
+
+1. For plain object-heavy payloads, `nRPC` stays in the same performance class as JSON-like approaches while still shrinking payload size.
+2. For object payloads that include a large typed array, `nRPC` becomes decisively better in both payload size and total round-trip time.
+
+From the current full benchmark run:
+
+- plain object payload (`object-heavy`):
+	- JSON-like payload size: `384623` bytes
+	- `nRPC` payload size: `259194` bytes
+	- about `32.6%` smaller
+- object plus large typed array (`object-heavy-number-array`):
+	- JSON-like payload size: `472270` bytes
+	- `nRPC` payload size: `279243` bytes
+	- about `40.9%` smaller
+
+And for the typed-array-heavy scenario, best measured total time:
+
+- best JSON-like path: `8.191ms`
+- best `nRPC` path: `3.987ms`
+
+That is roughly a `51.3%` reduction in total average time.
+
+The reason is straightforward: once typed arrays are involved, JSON spends too much time expanding, stringifying, and reparsing data that was already in a binary-friendly layout.
+
+`nRPC` avoids that detour.
+
+If your system moves:
+
+- audio buffers
+- image chunks
+- embeddings
+- waveform data
+- binary blobs wrapped in metadata objects
+- typed-array-heavy computation results
+
+then this is exactly the problem `nRPC` is designed to solve.
+
 ## Scope
 
 `nRPC` is for the part you do not want to rewrite in every runtime:
@@ -331,7 +403,7 @@ This is the right path when your server already exposes a namespace of methods a
 
 ### Bun Server Example
 
-There is a runnable example in [examples/nrpc-bun-server](../examples/nrpc-bun-server).
+There is a runnable Bun server example in the public [`nrpc-bun-server` repository](https://github.com/Nogg-aholic/nrpc-bun-server).
 
 It shows this flow end to end:
 
@@ -339,6 +411,10 @@ It shows this flow end to end:
 - generate one typed contract and one docs artifact
 - serve a Bun HTTP endpoint that dispatches by generated method name
 - call the generated contract over binary `nRPC` frames
+
+The paired client example is in the public [`nrpc-client` repository](https://github.com/Nogg-aholic/nrpc-client).
+
+That client consumes the generated contract, attaches a caller to the reflected surface, and demonstrates both direct binary RPC calls and synthetic route calls against the same typed API.
 
 Contract:
 
@@ -357,7 +433,7 @@ export type DemoApi = {
 Generate the surface:
 
 ```bash
-cd examples/nrpc-bun-server
+cd nRPCExamples/nrpc-bun-server
 bun run generate
 ```
 
@@ -375,6 +451,7 @@ bun run dev
 In another terminal, run the client demo:
 
 ```bash
+cd ../rpc-client
 bun run client
 ```
 
