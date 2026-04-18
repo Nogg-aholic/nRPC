@@ -48,32 +48,48 @@ export function renderInlinedContractRuntimePrelude(): string {
 }
 
 function extractStatementsForPrelude(spec: RuntimeSourceSpec): ts.Statement[] {
-	const sourceFile = loadBestSourceFile(spec.path);
-	const statementByName = new Map<string, ts.Statement>();
+	const sourceFiles = loadSourceCandidates(spec.path);
+	const statementEntries = new Map<string, Array<{ statement: ts.Statement; sourceFile: ts.SourceFile }>>();
 
-	for (const statement of sourceFile.statements) {
-		const statementName = getStatementName(statement);
-		if (statementName) {
-			statementByName.set(statementName, statement);
+	for (const sourceFile of sourceFiles) {
+		for (const statement of sourceFile.statements) {
+			const statementName = getStatementName(statement);
+			if (!statementName) {
+				continue;
+			}
+
+			const existing = statementEntries.get(statementName);
+			if (existing) {
+				existing.push({ statement, sourceFile });
+				continue;
+			}
+
+			statementEntries.set(statementName, [{ statement, sourceFile }]);
 		}
 	}
 
 	return spec.names.map((name) => {
-		const statement = statementByName.get(name);
-		if (!statement) {
-			throw new Error(`Could not find ${name} in ${sourceFile.fileName}.`);
+		const entries = statementEntries.get(name) ?? [];
+		const preferred = entries.find(({ statement, sourceFile }) => statementHasRuntimeImplementation(statement, sourceFile));
+		const resolved = preferred ?? entries[0];
+		if (!resolved) {
+			throw new Error(`Could not find ${name} in any runtime source candidate for ${spec.path}.`);
 		}
-		return statement;
+		return resolved.statement;
 	});
 }
 
-function loadBestSourceFile(relativeSourcePath: string): ts.SourceFile {
+function loadSourceCandidates(relativeSourcePath: string): ts.SourceFile[] {
 	const candidatePaths = resolveSourceCandidates(relativeSourcePath);
+	const sourceFiles: ts.SourceFile[] = [];
 	for (const candidatePath of candidatePaths) {
 		if (!fs.existsSync(candidatePath)) continue;
-		return ts.createSourceFile(candidatePath, fs.readFileSync(candidatePath, "utf8"), ts.ScriptTarget.Latest, true, scriptKindForPath(candidatePath));
+		sourceFiles.push(ts.createSourceFile(candidatePath, fs.readFileSync(candidatePath, "utf8"), ts.ScriptTarget.Latest, true, scriptKindForPath(candidatePath)));
 	}
-	throw new Error(`Could not locate runtime source for ${relativeSourcePath}.`);
+	if (sourceFiles.length === 0) {
+		throw new Error(`Could not locate runtime source for ${relativeSourcePath}.`);
+	}
+	return sourceFiles;
 }
 
 function resolveSourceCandidates(relativeSourcePath: string): string[] {
@@ -84,11 +100,31 @@ function resolveSourceCandidates(relativeSourcePath: string): string[] {
 	return [
 		path.resolve(currentDir, relativeSourcePath),
 		path.resolve(currentDir, "..", "src", relativeSourcePath),
-		path.resolve(currentDir, "..", "dist", baseName + ".js"),
-		path.resolve(currentDir, baseName + ".js"),
 		path.resolve(currentDir, baseName + ".d.ts"),
 		path.resolve(currentDir, "..", "dist", baseName + ".d.ts"),
+		path.resolve(currentDir, "..", "dist", baseName + ".js"),
+		path.resolve(currentDir, baseName + ".js"),
 	];
+}
+
+function statementHasRuntimeImplementation(statement: ts.Statement, sourceFile: ts.SourceFile): boolean {
+	if (sourceFile.isDeclarationFile) {
+		return false;
+	}
+
+	if (ts.isFunctionDeclaration(statement)) {
+		return statement.body != null;
+	}
+
+	if (ts.isVariableStatement(statement)) {
+		return statement.declarationList.declarations.every((declaration) => declaration.initializer != null);
+	}
+
+	if (ts.isClassDeclaration(statement) || ts.isEnumDeclaration(statement)) {
+		return true;
+	}
+
+	return false;
 }
 
 function scriptKindForPath(filePath: string): ts.ScriptKind {

@@ -58,6 +58,7 @@ export type TypeNodeShape =
 	| { kind: "optional"; inner: TypeNodeShape }
 	| { kind: "date"; policy: NonNullable<CodecPolicies["date"]> }
 	| { kind: "map"; key: TypeNodeShape; value: TypeNodeShape; policy: NonNullable<CodecPolicies["map"]> }
+	| { kind: "record"; value: TypeNodeShape }
 	| { kind: "set"; element: TypeNodeShape; policy: NonNullable<CodecPolicies["set"]> }
 	| { kind: "union"; variants: TypeNodeShape[] }
 	| {
@@ -244,12 +245,9 @@ export function normalizeType(type: ts.Type, checker: ts.TypeChecker, policies: 
 
 	const stringIndexType = checker.getIndexTypeOfType(type, ts.IndexKind.String);
 	if (stringIndexType) {
-		if (policies.map === "reject") throw new Error("String-indexed object encountered but map policy is reject.");
 		return {
-			kind: "map",
-			key: { kind: "primitive", primitive: "string" },
+			kind: "record",
 			value: normalizeType(stringIndexType, checker, policies, undefined, new Set(seen)),
-			policy: policies.map,
 		};
 	}
 
@@ -379,6 +377,16 @@ export function emitWriteExpression(shape: TypeNodeShape, accessor: string): str
 				...emitWriteExpression(shape.value, mapValueIdentifierName).map((line) => `\t${line}`),
 				`}`
 			];
+		case "record":
+			const recordValueIdentifierName = mapValueIdentifier(accessor);
+			return [
+				`const __recordEntries = Object.entries(${accessor});`,
+				`writer.writeU32(__recordEntries.length);`,
+				`for (const [entryKey, ${recordValueIdentifierName}] of __recordEntries) {`,
+				`\twriter.writeString(entryKey);`,
+				...emitWriteExpression(shape.value, recordValueIdentifierName).map((line) => `\t${line}`),
+				`}`
+			];
 		case "set":
 			return [
 				`writer.writeU32(${accessor}.size);`,
@@ -452,6 +460,8 @@ export function emitReadExpression(shape: TypeNodeShape): string {
 				return `(() => { const count = reader.readU32(); const map = new Map(); for (let index = 0; index < count; index += 1) map.set(${emitReadExpression(shape.key)}, ${emitReadExpression(shape.value)}); return map; })()`;
 			}
 			return `(() => { const count = reader.readU32(); const map = new Map(); for (let index = 0; index < count; index += 1) map.set(reader.readString(), ${emitReadExpression(shape.value)}); return map; })()`;
+		case "record":
+			return `(() => { const count = reader.readU32(); const value: Record<string, unknown> = {}; for (let index = 0; index < count; index += 1) value[reader.readString()] = ${emitReadExpression(shape.value)}; return value; })()`;
 		case "set":
 			return `(() => { const count = reader.readU32(); const value = new Set(); for (let index = 0; index < count; index += 1) value.add(${emitReadExpression(shape.element)}); return value; })()`;
 		case "union":
@@ -566,6 +576,8 @@ function emitTypeGuard(shape: TypeNodeShape, accessor: string): string {
 			return `${accessor} instanceof Date`;
 		case "map":
 			return `${accessor} instanceof Map`;
+		case "record":
+			return `${accessor} !== null && typeof ${accessor} === "object" && !Array.isArray(${accessor}) && !(${accessor} instanceof Map) && !(${accessor} instanceof Set)`;
 		case "set":
 			return `${accessor} instanceof Set`;
 		case "typed-array":
@@ -685,7 +697,7 @@ export function renderRpcCodecModule(options: RenderRpcCodecModuleOptions): stri
 		"\t},",
 		"\tdecode(data, offset = 0) {",
 		"\t\tconst reader = new GeneratedCodecReader(data, offset);",
-		`\t\tconst value = ${emitReadExpression(options.argsShape)};`,
+		`\t\tconst value = ${emitReadExpression(options.argsShape)} as ${options.argsTypeReference};`,
 		"\t\treturn [value, reader.offset];",
 		"\t}",
 		"};",
@@ -698,7 +710,7 @@ export function renderRpcCodecModule(options: RenderRpcCodecModuleOptions): stri
 		"\t},",
 		"\tdecode(data, offset = 0) {",
 		"\t\tconst reader = new GeneratedCodecReader(data, offset);",
-		`\t\tconst value = ${emitReadExpression(options.resultShape)};`,
+		`\t\tconst value = ${emitReadExpression(options.resultShape)} as ${options.resultTypeReference};`,
 		"\t\treturn [value, reader.offset];",
 		"\t}",
 		"};",
@@ -741,7 +753,7 @@ export function renderInlineRpcCodecMethod(options: RenderInlineRpcCodecMethodOp
 		"\t\t},",
 		"\t\tdecode(data, offset = 0) {",
 		"\t\t\tconst reader = new GeneratedCodecReader(data, offset);",
-		`\t\t\tconst value = ${emitReadExpression(options.argsShape)};`,
+		`\t\t\tconst value = ${emitReadExpression(options.argsShape)} as ${options.argsTypeReference};`,
 		"\t\t\treturn [value, reader.offset];",
 		"\t\t}",
 		"\t},",
@@ -753,7 +765,7 @@ export function renderInlineRpcCodecMethod(options: RenderInlineRpcCodecMethodOp
 		"\t\t},",
 		"\t\tdecode(data, offset = 0) {",
 		"\t\t\tconst reader = new GeneratedCodecReader(data, offset);",
-		`\t\t\tconst value = ${emitReadExpression(options.resultShape)};`,
+		`\t\t\tconst value = ${emitReadExpression(options.resultShape)} as ${options.resultTypeReference};`,
 		"\t\t\treturn [value, reader.offset];",
 		"\t\t}",
 		"\t}",
@@ -778,7 +790,7 @@ export function renderInlineRpcCodecExpression(options: Omit<RenderInlineRpcCode
 	const argsDecode = [
 		"decode(data, offset = 0) {",
 		"\tconst reader = new GeneratedCodecReader(data, offset);",
-		`\tconst value = ${emitReadExpression(options.argsShape)};`,
+		`\tconst value = ${emitReadExpression(options.argsShape)} as ${options.argsTypeReference};`,
 		"\treturn [value, reader.offset];",
 		"}"
 	].join("\n");
@@ -792,7 +804,7 @@ export function renderInlineRpcCodecExpression(options: Omit<RenderInlineRpcCode
 	const resultDecode = [
 		"decode(data, offset = 0) {",
 		"\tconst reader = new GeneratedCodecReader(data, offset);",
-		`\tconst value = ${emitReadExpression(options.resultShape)};`,
+		`\tconst value = ${emitReadExpression(options.resultShape)} as ${options.resultTypeReference};`,
 		"\treturn [value, reader.offset];",
 		"}"
 	].join("\n");

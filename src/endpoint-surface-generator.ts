@@ -63,6 +63,7 @@ export function generateEndpointSurface(options: GenerateEndpointSurfaceOptions)
 	const rootPath = options.rootPath ?? [camelize(options.rootType)];
 	const globalName = options.globalName ?? rootPath[rootPath.length - 1] ?? camelize(options.rootType);
 	const outputDir = path.dirname(options.outputImportPath);
+	const contractOutputPath = path.join(outputDir, path.basename(options.outputImportPath).replace(/\.surface\.ts$/, ".contract.ts"));
 	const sourceImportPath = options.moduleSpecifier ?? toModuleRelativeImport(options.outputImportPath, options.entryFile).replace(/\.ts$/, ".js");
 	const methods = collectRpcMethods(rootType, checker, policies);
 	const routeManifest = generateHttpRouteManifest({
@@ -85,6 +86,19 @@ export function generateEndpointSurface(options: GenerateEndpointSurfaceOptions)
 			methods,
 		})
 	});
+	const contractText = renderGeneratedContractModule({
+		rootType: options.rootType,
+		rootPath,
+		globalName,
+		routeManifest,
+		checker,
+		policies,
+		methods,
+	});
+	files.push({
+		path: contractOutputPath,
+		content: contractText,
+	});
 	const surfaceDefinition = buildSurfaceDefinition({
 		rootPath,
 		globalName,
@@ -97,15 +111,7 @@ export function generateEndpointSurface(options: GenerateEndpointSurfaceOptions)
 	return {
 		surfaceDefinition,
 		declarationText: buildSyntheticRpcDeclaration(surfaceDefinition),
-		contractText: renderGeneratedContractModule({
-			rootType: options.rootType,
-			rootPath,
-			globalName,
-			routeManifest,
-			checker,
-			policies,
-			methods,
-		}),
+		contractText,
 		publicModuleText: renderGeneratedSurfaceModule({
 			rootType: options.rootType,
 			rootPath,
@@ -469,6 +475,8 @@ function renderTypeNode(shape: TypeNodeShape, policies: Required<CodecPolicies>,
 			return policies.date === "reject" ? "never" : "Date";
 		case "map":
 			return `Map<${renderTypeNode(shape.key, policies, depth)}, ${renderTypeNode(shape.value, policies, depth)}>`;
+		case "record":
+			return `Record<string, ${renderTypeNode(shape.value, policies, depth)}>`;
 		case "set":
 			return `Set<${renderTypeNode(shape.element, policies, depth)}>`;
 		case "union":
@@ -518,11 +526,12 @@ function renderGeneratedSurfaceModule(options: RenderGeneratedSurfaceModuleOptio
 	return [
 		"// AUTO-GENERATED FILE. DO NOT EDIT.",
 		`export {`,
+		`	${options.globalName}RpcDefinition as ${options.globalName}RpcSurface,`,
 		`\t${options.globalName}RpcDefinition,`,
 		`\t${options.globalName}CodecEntries,`,
 		`\t${options.globalName}CodecRegistry,`,
 		`\t${options.globalName}HttpRouteManifest,`,
-		`} from ${JSON.stringify(`./${path.basename(options.contractModulePath).replace(/\.contract\.js$/, "-auto-contract.js")}`)};`,
+		`} from ${JSON.stringify(`./${path.basename(options.contractModulePath)}`)};`,
 		""
 	].join("\n");
 }
