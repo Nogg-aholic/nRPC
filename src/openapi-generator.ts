@@ -222,6 +222,11 @@ function typeShapeToOpenApiSchema(
 					required: ["key", "value"],
 				},
 			};
+		case "record":
+			return {
+				type: "object",
+				additionalProperties: typeShapeToOpenApiSchema(shape.value, checker, components, policies),
+			};
 		case "set":
 			return { type: "array", items: typeShapeToOpenApiSchema(shape.element, checker, components, policies) };
 		case "union":
@@ -240,10 +245,13 @@ function typeShapeToOpenApiSchema(
 				items: shape.elements.length > 0 ? { anyOf: shape.elements.map((entry) => typeShapeToOpenApiSchema(entry, checker, components, policies)) } : {},
 			};
 		case "object": {
-			const properties = Object.fromEntries(shape.properties.map((property) => [
-				property.name,
-				typeShapeToOpenApiSchema(property.shape, checker, components, policies),
-			]));
+			const properties = Object.fromEntries(shape.properties.map((property) => {
+				const propertySchema = typeShapeToOpenApiSchema(property.shape, checker, components, policies);
+				if (property.description && !propertySchema.description) {
+					propertySchema.description = property.description;
+				}
+				return [property.name, propertySchema] as const;
+			}));
 			const required = shape.properties.filter((property) => !isOptionalShape(property.shape)).map((property) => property.name);
 			return {
 				type: "object",

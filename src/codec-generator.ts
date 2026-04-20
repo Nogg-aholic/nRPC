@@ -79,7 +79,7 @@ export type TypeNodeShape =
 	| { kind: "typed-array"; arrayType: TypedArrayKind }
 	| { kind: "array"; element: TypeNodeShape }
 	| { kind: "tuple"; elements: TypeNodeShape[] }
-	| { kind: "object"; properties: Array<{ name: string; shape: TypeNodeShape }> };
+	| { kind: "object"; properties: Array<{ name: string; shape: TypeNodeShape; description?: string }> };
 
 const typedArrayNames = new Set<TypedArrayKind>([
 	"Int8Array",
@@ -314,7 +314,7 @@ export function normalizeType(type: ts.Type, checker: ts.TypeChecker, policies: 
 
 	const properties = checker.getPropertiesOfType(type);
 	if (properties.length > 0) {
-		const normalizedProperties: Array<{ name: string; shape: TypeNodeShape }> = [];
+		const normalizedProperties: Array<{ name: string; shape: TypeNodeShape; description?: string }> = [];
 		for (const property of properties) {
 			const declaration = property.valueDeclaration ?? property.declarations?.[0];
 			if (!declaration) throw new Error(`Missing declaration for property ${property.name}.`);
@@ -322,9 +322,11 @@ export function normalizeType(type: ts.Type, checker: ts.TypeChecker, policies: 
 			if (checker.getSignaturesOfType(propertyType, ts.SignatureKind.Call).length > 0) {
 				continue;
 			}
+			const description = getSymbolDescription(property, checker);
 			normalizedProperties.push({
 				name: property.name,
-				shape: normalizeType(propertyType, checker, policies, property.name, new Set(seen))
+				shape: normalizeType(propertyType, checker, policies, property.name, new Set(seen)),
+				...(description ? { description } : {}),
 			});
 		}
 		return {
@@ -334,6 +336,11 @@ export function normalizeType(type: ts.Type, checker: ts.TypeChecker, policies: 
 	}
 
 	throw new Error(`Unsupported type for codec generation: ${checker.typeToString(type)}`);
+}
+
+function getSymbolDescription(symbol: ts.Symbol, checker: ts.TypeChecker): string | undefined {
+	const text = ts.displayPartsToString(symbol.getDocumentationComment(checker)).trim();
+	return text.length > 0 ? text : undefined;
 }
 
 function findDiscriminator(variants: Array<Extract<TypeNodeShape, { kind: "object" }>>): string | undefined {

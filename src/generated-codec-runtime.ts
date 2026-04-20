@@ -38,7 +38,7 @@ export type GeneratedCodecShape =
 	| { kind: 'typed-array'; arrayType: GeneratedCodecTypedArrayKind }
 	| { kind: 'array'; element: GeneratedCodecShape }
 	| { kind: 'tuple'; elements: ReadonlyArray<GeneratedCodecShape> }
-	| { kind: 'object'; properties: ReadonlyArray<{ name: string; shape: GeneratedCodecShape }> };
+	| { kind: 'object'; properties: ReadonlyArray<{ name: string; shape: GeneratedCodecShape; description?: string }> };
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();

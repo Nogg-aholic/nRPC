@@ -269,7 +269,7 @@ function renderInlineCodecRegistryAttachment(
 			return `\t[${JSON.stringify(entry.methodName)}, { args: ${JSON.stringify(entry.argsShape)}, result: ${JSON.stringify(entry.resultShape)} }] as const,`;
 		});
 	return [
-		`const ${globalName}CodecShapeEntries: ReadonlyArray<readonly [string, { args: GeneratedCodecShape; result: GeneratedCodecShape }]> = [`,
+		`export const ${globalName}CodecShapeEntries: ReadonlyArray<readonly [string, { args: GeneratedCodecShape; result: GeneratedCodecShape }]> = [`,
 		...entryLines,
 		`] as const;`,
 		"",
