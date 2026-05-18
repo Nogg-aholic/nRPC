@@ -12,5 +12,17 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["./src/**/*.ts"]
+  "include": [
+    "./src/types.ts",
+    "./src/encoding.ts",
+    "./src/value-codec.ts",
+    "./src/rpc-frame.ts",
+    "./src/rpc-method-ref.ts",
+    "./src/generated-codec-runtime.ts",
+    "./src/http-route-runtime.ts",
+    "./src/web-runtime.ts",
+    "./src/synthetic-rpc-surface.ts",
+    "./src/upstream-proxy-injection.ts",
+    "./src/index.ts"
+  ]
 }

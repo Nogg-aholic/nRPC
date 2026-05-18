@@ -101,6 +101,8 @@ then this is exactly the problem `nRPC` is designed to solve.
 - typed-array support, including bigint typed arrays
 - generic call, await, and return frame helpers
 - typed callable references for ergonomic RPC callsites
+- generated-runtime helpers for endpoint surfaces and codec registries
+- synthetic HTTP route runtime support for JSON and `.nrpc` binary endpoints
 - no framework assumptions
 - ESM package with declaration output
 
@@ -159,6 +161,18 @@ For local package development:
 bun run build
 ```
 
+## CLI And Code Generation
+
+Code generation and CLI tooling now live in the separate `@nogg-aholic/nrpc-cli` package.
+
+Install both packages when you need generation:
+
+```bash
+npm install @nogg-aholic/nrpc @nogg-aholic/nrpc-cli
+```
+
+The runtime package stays usable on its own when you only need the transport and runtime helpers.
+
 ## Releases
 
 Releases are published from the GitHub repository and distributed on npm as `@nogg-aholic/nrpc`.
@@ -186,6 +200,8 @@ The frame helpers are generic. You provide the event byte so the package can be 
 ### Generated Codecs
 
 For object-heavy payloads, generic value encoding is often not the best path. `nRPC` includes build-time codec generation, but the intended default is namespace-wide generation from a single reflected contract root.
+
+The generator commands are provided by `@nogg-aholic/nrpc-cli`.
 
 Use generated codecs when:
 
@@ -238,7 +254,7 @@ export type GetChartResult = {
 
 #### 2. Generate A Codec Module
 
-With the package CLI:
+With the CLI package installed:
 
 ```bash
 nrpc-generate-codec \
@@ -365,7 +381,7 @@ If you already have a namespace-style contract type and want one build step that
 - optional global declaration text
 - optional runtime install text
 
-use the endpoint-surface generator.
+use the endpoint-surface generator from `@nogg-aholic/nrpc-cli`.
 
 Example source contract:
 
@@ -397,9 +413,60 @@ That emits:
 - `server-api.contract.ts`
 - `server-api.surface.docs.ts`
 
-The contract file contains the typed RPC definition, shape-based codec registry, and HTTP route manifest.
+The generated files have different jobs:
+
+- `server-api.contract.ts`: typed RPC definition, generated codec registry, and embedded `*HttpRouteManifest`
+- `server-api.surface.docs.ts`: generated `docsJson` and `docsMethods` exports for docs serving, inspection, or build-time tooling
+
+In normal package layouts, the docs module is usually server-only or build-time only. The runtime client surface and synthetic route callers do not require it.
 
 This is the right path when your server already exposes a namespace of methods and you want one generated contract artifact plus one docs artifact from that single source of truth.
+
+### Synthetic HTTP Routes
+
+Generated endpoint surfaces also emit an HTTP route manifest that maps method names to stable POST endpoints.
+
+That manifest is used by:
+
+- `createSyntheticHttpRouteHandler(...)` on the server
+- `createSyntheticRouteCaller(...)` on the client
+
+When the generated protocol mode is `both`, each route supports:
+
+- bare JSON POST at the generated `httpPath`
+- JSON POST at `httpPath + .json`
+- binary POST at `httpPath + .nrpc`
+
+This lets you keep `/rpc` for version-locked binary transport while also exposing selective JSON-friendly synthetic endpoints from the same generated contract.
+
+### OpenAPI JSON To Typed Surface
+
+`@nogg-aholic/nrpc-cli` can also consume an existing OpenAPI JSON document and generate a typed JSON-only caller surface for it.
+
+Example:
+
+```bash
+nrpc-generate-openapi-surface \
+	--in ./openapi/third-party-api.json \
+	--out ./src/generated/third-party-api.surface.ts \
+	--global thirdPartyApi \
+	--root-type ThirdPartyApiSurface \
+	--root-path thirdParty
+```
+
+That emits:
+
+- `third-party-api.contract.ts`
+- `third-party-api.surface.docs.ts`
+
+The generated contract wraps the external REST API with a typed `fetch` caller and an OpenAPI route manifest.
+
+Important constraints of this generator:
+
+- it is JSON-only by design
+- it does not generate binary codecs
+- it does not assume `/rpc`
+- the docs module is optional and usually server/build-time only
 
 ### Bun Server Example
 

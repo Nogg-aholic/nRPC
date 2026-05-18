@@ -6,4 +6,5 @@ export * from './rpc-method-ref.js';
 export * from './generated-codec-runtime.js';
 export * from './http-route-runtime.js';
 export * from './web-runtime.js';
+export * from './synthetic-rpc-surface.js';
 export * from './upstream-proxy-injection.js';
