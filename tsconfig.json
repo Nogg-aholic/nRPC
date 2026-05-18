@@ -23,6 +23,13 @@
     "./src/web-runtime.ts",
     "./src/synthetic-rpc-surface.ts",
     "./src/upstream-proxy-injection.ts",
+    "./src/service-constants.ts",
+    "./src/service-errors.ts",
+    "./src/service-env.ts",
+    "./src/service-responses.ts",
+    "./src/service-fetch-handler.ts",
+    "./src/service-ws-dispatcher.ts",
+    "./src/service-bun-server.ts",
     "./src/index.ts"
   ]
 }
