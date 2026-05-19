@@ -30,6 +30,7 @@
     "./src/service-fetch-handler.ts",
     "./src/service-ws-dispatcher.ts",
     "./src/service-bun-server.ts",
+    "./src/mcp-http-handler.ts",
     "./src/index.ts"
   ]
 }

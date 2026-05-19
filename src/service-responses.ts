@@ -1,11 +1,17 @@
-import type { RpcFetchErrorContext } from './web-runtime.js';
+import type { RpcFetchErrorContext } from "./web-runtime.js";
 
-import { isRpcServiceError } from './service-errors.js';
+import { isRpcServiceError } from "./service-errors.js";
 
 const hasErrorStatus = (error: unknown): error is { status: number } =>
-  typeof error === 'object' && error != null && typeof (error as { status?: unknown }).status === 'number';
+  typeof error === "object" &&
+  error != null &&
+  typeof (error as { status?: unknown }).status === "number";
 
-export const jsonError = (status: number, message: string, type = 'server_error'): Response =>
+export const jsonError = (
+  status: number,
+  message: string,
+  type = "server_error",
+): Response =>
   Response.json(
     {
       error: {
@@ -16,9 +22,12 @@ export const jsonError = (status: number, message: string, type = 'server_error'
     { status },
   );
 
-export const notFoundJson = (): Response => jsonError(404, 'Route not found', 'not_found');
+export const notFoundJson = (): Response =>
+  jsonError(404, "Route not found", "not_found");
 
-export const createRpcBinaryErrorResponse = (context: RpcFetchErrorContext): Response => {
+export const createRpcBinaryErrorResponse = (
+  context: RpcFetchErrorContext,
+): Response => {
   const status = isRpcServiceError(context.error)
     ? context.error.status
     : hasErrorStatus(context.error)
@@ -29,7 +38,7 @@ export const createRpcBinaryErrorResponse = (context: RpcFetchErrorContext): Res
   return new Response(payload, {
     status,
     headers: {
-      'content-type': 'application/octet-stream',
+      "content-type": "application/octet-stream",
     },
   });
 };

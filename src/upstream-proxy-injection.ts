@@ -1,1 +1,1 @@
-export * from './synthetic-rpc-surface.js';
+export * from "./synthetic-rpc-surface.js";

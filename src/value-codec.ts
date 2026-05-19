@@ -1,5 +1,12 @@
-import { align8, createTypedArray, getTypedArrayType, isPlainObject, isTypedArray, toUint8Array } from './encoding.js';
-import { RpcArgTag, type TypedArrayType } from './types.js';
+import {
+  align8,
+  createTypedArray,
+  getTypedArrayType,
+  isPlainObject,
+  isTypedArray,
+  toUint8Array,
+} from "./encoding.js";
+import { RpcArgTag, type TypedArrayType } from "./types.js";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -32,9 +39,16 @@ function readF64(view: DataView, offset: number): [number, number] {
 }
 
 function measureInto(value: unknown, offset: number): number {
-  if (value === null || value === undefined || value === false || value === true) return offset + 1;
-  if (typeof value === 'number' || typeof value === 'bigint') return offset + 1 + 8;
-  if (typeof value === 'string') {
+  if (
+    value === null ||
+    value === undefined ||
+    value === false ||
+    value === true
+  )
+    return offset + 1;
+  if (typeof value === "number" || typeof value === "bigint")
+    return offset + 1 + 8;
+  if (typeof value === "string") {
     const bytes = encoder.encode(value);
     return offset + 1 + 4 + bytes.length;
   }
@@ -58,7 +72,9 @@ function measureInto(value: unknown, offset: number): number {
     }
     return next;
   }
-  throw new Error(`[RPC] Unsupported arg type: ${Object.prototype.toString.call(value)}`);
+  throw new Error(
+    `[RPC] Unsupported arg type: ${Object.prototype.toString.call(value)}`,
+  );
 }
 
 function encodeInto(buf: Uint8Array, offset: number, value: unknown): number {
@@ -80,16 +96,16 @@ function encodeInto(buf: Uint8Array, offset: number, value: unknown): number {
     buf[offset++] = RpcArgTag.True;
     return offset;
   }
-  if (typeof value === 'number') {
+  if (typeof value === "number") {
     buf[offset++] = RpcArgTag.Float64;
     return writeF64(view, offset, value);
   }
-  if (typeof value === 'bigint') {
+  if (typeof value === "bigint") {
     buf[offset++] = RpcArgTag.BigInt64;
     view.setBigInt64(offset, value, true);
     return offset + 8;
   }
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     buf[offset++] = RpcArgTag.String;
     const bytes = encoder.encode(value);
     offset = writeU32(view, offset, bytes.length);
@@ -127,7 +143,9 @@ function encodeInto(buf: Uint8Array, offset: number, value: unknown): number {
     return offset;
   }
 
-  throw new Error(`[RPC] Unsupported arg type: ${Object.prototype.toString.call(value)}`);
+  throw new Error(
+    `[RPC] Unsupported arg type: ${Object.prototype.toString.call(value)}`,
+  );
 }
 
 export function encodeRpcValue(value: unknown): Uint8Array {
@@ -137,11 +155,18 @@ export function encodeRpcValue(value: unknown): Uint8Array {
   return buf;
 }
 
-export function decodeRpcValue(data: Uint8Array, offset = 0): [unknown, number] {
+export function decodeRpcValue(
+  data: Uint8Array,
+  offset = 0,
+): [unknown, number] {
   return decodeRpcValueInternal(data, offset, offset);
 }
 
-function decodeRpcValueInternal(data: Uint8Array, offset: number, baseOffset: number): [unknown, number] {
+function decodeRpcValueInternal(
+  data: Uint8Array,
+  offset: number,
+  baseOffset: number,
+): [unknown, number] {
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const tag = data[offset++] as RpcArgTag;
 
@@ -172,14 +197,26 @@ function decodeRpcValueInternal(data: Uint8Array, offset: number, baseOffset: nu
       offset = baseOffset + align8(next - baseOffset);
       const start = offset;
       const end = start + byteLen;
-      return [createTypedArray(data.buffer, data.byteOffset + start, byteLen, arrayType), end];
+      return [
+        createTypedArray(
+          data.buffer,
+          data.byteOffset + start,
+          byteLen,
+          arrayType,
+        ),
+        end,
+      ];
     }
     case RpcArgTag.Array: {
       const [count, next] = readU32(view, offset);
       offset = next;
       const values = new Array(count);
       for (let index = 0; index < count; index += 1) {
-        [values[index], offset] = decodeRpcValueInternal(data, offset, baseOffset);
+        [values[index], offset] = decodeRpcValueInternal(
+          data,
+          offset,
+          baseOffset,
+        );
       }
       return [values, offset];
     }

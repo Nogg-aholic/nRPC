@@ -1,6 +1,6 @@
-import type { ServerWebSocket } from 'bun';
+import type { ServerWebSocket } from "bun";
 
-import type { RpcMethodInvoker } from './web-runtime.js';
+import type { RpcMethodInvoker } from "./web-runtime.js";
 
 interface WsRpcRequest {
   id?: string | number;
@@ -9,9 +9,11 @@ interface WsRpcRequest {
 }
 
 const decodeWebSocketMessage = (message: string | BufferSource): string =>
-  typeof message === 'string'
+  typeof message === "string"
     ? message
-    : new TextDecoder().decode(message instanceof ArrayBuffer ? new Uint8Array(message) : message);
+    : new TextDecoder().decode(
+        message instanceof ArrayBuffer ? new Uint8Array(message) : message,
+      );
 
 export const handleRpcWebSocketMessage = async (
   ws: ServerWebSocket<unknown>,
@@ -24,12 +26,18 @@ export const handleRpcWebSocketMessage = async (
   try {
     payload = JSON.parse(text) as WsRpcRequest;
   } catch {
-    ws.send(JSON.stringify({ ok: false, error: { message: 'invalid JSON' } }));
+    ws.send(JSON.stringify({ ok: false, error: { message: "invalid JSON" } }));
     return;
   }
 
-  if (!payload || typeof payload.method !== 'string') {
-    ws.send(JSON.stringify({ id: payload?.id, ok: false, error: { message: 'method is required' } }));
+  if (!payload || typeof payload.method !== "string") {
+    ws.send(
+      JSON.stringify({
+        id: payload?.id,
+        ok: false,
+        error: { message: "method is required" },
+      }),
+    );
     return;
   }
 
@@ -43,7 +51,7 @@ export const handleRpcWebSocketMessage = async (
         id: payload.id,
         ok: false,
         error: {
-          message: error instanceof Error ? error.message : 'rpc_error',
+          message: error instanceof Error ? error.message : "rpc_error",
         },
       }),
     );

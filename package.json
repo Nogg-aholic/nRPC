@@ -1,7 +1,7 @@
 {
   "name": "@nogg-aholic/nrpc",
   "description": "Small binary RPC codec for compact value encoding and generic RPC message framing.",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "homepage": "https://github.com/Nogg-aholic/nRPC#readme",
   "license": "MIT",
   "type": "module",
@@ -52,6 +52,11 @@
       "types": "./dist/generated-codec-runtime.d.ts",
       "import": "./dist/generated-codec-runtime.js",
       "default": "./dist/generated-codec-runtime.js"
+    },
+    "./mcp-http-handler": {
+      "types": "./dist/mcp-http-handler.d.ts",
+      "import": "./dist/mcp-http-handler.js",
+      "default": "./dist/mcp-http-handler.js"
     },
     "./synthetic-rpc-surface": {
       "types": "./dist/synthetic-rpc-surface.d.ts",

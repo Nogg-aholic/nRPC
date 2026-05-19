@@ -1,4 +1,4 @@
-import { isWebsocketEnabled } from './service-constants.js';
+import { isWebsocketEnabled } from "./service-constants.js";
 
 export interface ServiceConfig {
   port: number;
@@ -11,7 +11,9 @@ export interface LoadServiceConfigOptions {
   serviceName: string;
 }
 
-export const loadServiceConfig = (options: LoadServiceConfigOptions): ServiceConfig => ({
+export const loadServiceConfig = (
+  options: LoadServiceConfigOptions,
+): ServiceConfig => ({
   port: Number.parseInt(process.env.PORT ?? String(options.defaultPort), 10),
   serviceName: options.serviceName,
   websocketEnabled: isWebsocketEnabled(),
