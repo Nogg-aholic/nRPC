@@ -12,6 +12,7 @@ export * from "./service-constants.js";
 export * from "./service-errors.js";
 export * from "./service-env.js";
 export * from "./service-responses.js";
+export * from "./service-composition.js";
 export * from "./service-fetch-handler.js";
 export * from "./service-ws-dispatcher.js";
 export * from "./service-bun-server.js";

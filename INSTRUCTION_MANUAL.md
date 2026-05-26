@@ -2,6 +2,11 @@
 
 This manual is for `@nogg-aholic/nrpc` runtime setup only.
 
+Companion documents:
+
+- `nRPC/USAGE_GUIDE.md`: practical runtime usage and SDK plugin composition flow
+- `nrpc-cli/BUILD_GUIDE.md`: generation/build flow for the CLI package
+
 Use this document when you want to:
 
 - run an nRPC server
