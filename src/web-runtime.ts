@@ -329,7 +329,8 @@ export function createSyntheticHttpRouteHandler(
       }));
 
   return async (request: Request) => {
-    if (request.method !== "POST") {
+    // Support both POST and GET requests
+    if (request.method !== "POST" && request.method !== "GET") {
       return undefined;
     }
 
@@ -338,6 +339,17 @@ export function createSyntheticHttpRouteHandler(
       return undefined;
     }
 
+    // For GET requests, assume empty args and JSON protocol
+    if (request.method === "GET") {
+      const result = await options.invokeMethod(match.entry.methodName, []);
+      return jsonResponseFactory(result, {
+        methodName: match.entry.methodName,
+        args: [],
+        match,
+      });
+    }
+
+    // Existing POST logic
     const codec = options.codecResolver(match.entry.codecLookupKey);
     const args =
       match.protocol === "binary"
