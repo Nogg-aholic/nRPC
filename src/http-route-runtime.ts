@@ -68,10 +68,19 @@ export function createHttpRouteMatcher(
       }
     }
     const entry = lookup.get(normalizedPath);
-    if (!entry || !routeSupportsProtocol(entry, defaultProtocol)) {
-      return undefined;
+    if (entry && routeSupportsProtocol(entry, defaultProtocol)) {
+      return { entry, relativePath: normalizedPath, protocol: defaultProtocol };
     }
-    return { entry, relativePath: normalizedPath, protocol: defaultProtocol };
+    
+    // Fallback for root-level functions (e.g., "/health")
+    // Check if the normalized path matches any route's httpPath directly
+    for (const route of manifest.routes) {
+      if (normalizeHttpPath(route.httpPath) === normalizedPath && routeSupportsProtocol(route, defaultProtocol)) {
+        return { entry: route, relativePath: normalizedPath, protocol: defaultProtocol };
+      }
+    }
+    
+    return undefined;
   };
 }
 
