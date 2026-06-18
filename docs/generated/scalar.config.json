@@ -1,0 +1,1521 @@
+{
+  "$schema": "https://registry.scalar.com/@scalar/schemas/config",
+  "scalar": "2.0.0",
+  "info": {
+    "title": "NrpcNamespace",
+    "description": "Auto-generated documentation"
+  },
+  "assetsDir": "assets",
+  "siteConfig": {
+    "theme": "default",
+    "subpath": "/docs"
+  },
+  "navigation": {
+    "routes": {
+      "/": {
+        "type": "group",
+        "title": "Documentation",
+        "children": {
+          "": {
+            "type": "page",
+            "title": "Overview",
+            "filepath": "index.md"
+          },
+          "/methods": {
+            "type": "group",
+            "title": "Methods",
+            "children": {
+              "/bunServer": {
+                "type": "group",
+                "title": "bunServer",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "bunServer",
+                    "filepath": "methods/bunServer.md"
+                  },
+                  "/bunServer/createBunRequestHandler": {
+                    "type": "page",
+                    "title": "createBunRequestHandler",
+                    "filepath": "methods/bunServer/createBunRequestHandler.md"
+                  },
+                  "/bunServer/createBunServer": {
+                    "type": "page",
+                    "title": "createBunServer",
+                    "filepath": "methods/bunServer/createBunServer.md"
+                  },
+                  "/bunServer/createBunServerHandlers": {
+                    "type": "page",
+                    "title": "createBunServerHandlers",
+                    "filepath": "methods/bunServer/createBunServerHandlers.md"
+                  }
+                }
+              },
+              "/encoding": {
+                "type": "group",
+                "title": "encoding",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "encoding",
+                    "filepath": "methods/encoding.md"
+                  },
+                  "/encoding/align8": {
+                    "type": "page",
+                    "title": "align8",
+                    "filepath": "methods/encoding/align8.md"
+                  },
+                  "/encoding/createTypedArray": {
+                    "type": "page",
+                    "title": "createTypedArray",
+                    "filepath": "methods/encoding/createTypedArray.md"
+                  },
+                  "/encoding/getTypedArrayType": {
+                    "type": "page",
+                    "title": "getTypedArrayType",
+                    "filepath": "methods/encoding/getTypedArrayType.md"
+                  },
+                  "/encoding/isPlainObject": {
+                    "type": "page",
+                    "title": "isPlainObject",
+                    "filepath": "methods/encoding/isPlainObject.md"
+                  },
+                  "/encoding/isTypedArray": {
+                    "type": "page",
+                    "title": "isTypedArray",
+                    "filepath": "methods/encoding/isTypedArray.md"
+                  },
+                  "/encoding/toUint8Array": {
+                    "type": "page",
+                    "title": "toUint8Array",
+                    "filepath": "methods/encoding/toUint8Array.md"
+                  }
+                }
+              },
+              "/generatedCodecRuntime": {
+                "type": "group",
+                "title": "generatedCodecRuntime",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "generatedCodecRuntime",
+                    "filepath": "methods/generatedCodecRuntime.md"
+                  },
+                  "/generatedCodecRuntime/createGeneratedPayloadCodec": {
+                    "type": "page",
+                    "title": "createGeneratedPayloadCodec",
+                    "filepath": "methods/generatedCodecRuntime/createGeneratedPayloadCodec.md"
+                  },
+                  "/generatedCodecRuntime/createGeneratedRpcMethodCodec": {
+                    "type": "page",
+                    "title": "createGeneratedRpcMethodCodec",
+                    "filepath": "methods/generatedCodecRuntime/createGeneratedRpcMethodCodec.md"
+                  },
+                  "/generatedCodecRuntime/GeneratedCodecReader": {
+                    "type": "page",
+                    "title": "GeneratedCodecReader",
+                    "filepath": "methods/generatedCodecRuntime/GeneratedCodecReader.md"
+                  },
+                  "/generatedCodecRuntime/GeneratedCodecWriter": {
+                    "type": "page",
+                    "title": "GeneratedCodecWriter",
+                    "filepath": "methods/generatedCodecRuntime/GeneratedCodecWriter.md"
+                  }
+                }
+              },
+              "/httpRouteRuntime": {
+                "type": "group",
+                "title": "httpRouteRuntime",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "httpRouteRuntime",
+                    "filepath": "methods/httpRouteRuntime.md"
+                  },
+                  "/httpRouteRuntime/createHttpRouteMatcher": {
+                    "type": "page",
+                    "title": "createHttpRouteMatcher",
+                    "filepath": "methods/httpRouteRuntime/createHttpRouteMatcher.md"
+                  },
+                  "/httpRouteRuntime/routeSupportsProtocol": {
+                    "type": "page",
+                    "title": "routeSupportsProtocol",
+                    "filepath": "methods/httpRouteRuntime/routeSupportsProtocol.md"
+                  }
+                }
+              },
+              "/mcpHttpHandler": {
+                "type": "group",
+                "title": "mcpHttpHandler",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "mcpHttpHandler",
+                    "filepath": "methods/mcpHttpHandler.md"
+                  },
+                  "/mcpHttpHandler/createMcpHttpHandler": {
+                    "type": "page",
+                    "title": "createMcpHttpHandler",
+                    "filepath": "methods/mcpHttpHandler/createMcpHttpHandler.md"
+                  }
+                }
+              },
+              "/nodeServer": {
+                "type": "group",
+                "title": "nodeServer",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "nodeServer",
+                    "filepath": "methods/nodeServer.md"
+                  },
+                  "/nodeServer/withOpenTelemetryNodeServer": {
+                    "type": "page",
+                    "title": "withOpenTelemetryNodeServer",
+                    "filepath": "methods/nodeServer/withOpenTelemetryNodeServer.md"
+                  }
+                }
+              },
+              "/rpcFrame": {
+                "type": "group",
+                "title": "rpcFrame",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "rpcFrame",
+                    "filepath": "methods/rpcFrame.md"
+                  },
+                  "/rpcFrame/decodeRpcAwaitMessage": {
+                    "type": "page",
+                    "title": "decodeRpcAwaitMessage",
+                    "filepath": "methods/rpcFrame/decodeRpcAwaitMessage.md"
+                  },
+                  "/rpcFrame/decodeRpcAwaitMessageWithCodec": {
+                    "type": "page",
+                    "title": "decodeRpcAwaitMessageWithCodec",
+                    "filepath": "methods/rpcFrame/decodeRpcAwaitMessageWithCodec.md"
+                  },
+                  "/rpcFrame/decodeRpcAwaitMethodName": {
+                    "type": "page",
+                    "title": "decodeRpcAwaitMethodName",
+                    "filepath": "methods/rpcFrame/decodeRpcAwaitMethodName.md"
+                  },
+                  "/rpcFrame/decodeRpcCallMessage": {
+                    "type": "page",
+                    "title": "decodeRpcCallMessage",
+                    "filepath": "methods/rpcFrame/decodeRpcCallMessage.md"
+                  },
+                  "/rpcFrame/decodeRpcCallMessageWithCodec": {
+                    "type": "page",
+                    "title": "decodeRpcCallMessageWithCodec",
+                    "filepath": "methods/rpcFrame/decodeRpcCallMessageWithCodec.md"
+                  },
+                  "/rpcFrame/decodeRpcReturnMessage": {
+                    "type": "page",
+                    "title": "decodeRpcReturnMessage",
+                    "filepath": "methods/rpcFrame/decodeRpcReturnMessage.md"
+                  },
+                  "/rpcFrame/decodeRpcReturnMessageWithCodec": {
+                    "type": "page",
+                    "title": "decodeRpcReturnMessageWithCodec",
+                    "filepath": "methods/rpcFrame/decodeRpcReturnMessageWithCodec.md"
+                  },
+                  "/rpcFrame/encodeRpcAwaitMessage": {
+                    "type": "page",
+                    "title": "encodeRpcAwaitMessage",
+                    "filepath": "methods/rpcFrame/encodeRpcAwaitMessage.md"
+                  },
+                  "/rpcFrame/encodeRpcAwaitMessageWithCodec": {
+                    "type": "page",
+                    "title": "encodeRpcAwaitMessageWithCodec",
+                    "filepath": "methods/rpcFrame/encodeRpcAwaitMessageWithCodec.md"
+                  },
+                  "/rpcFrame/encodeRpcCallMessage": {
+                    "type": "page",
+                    "title": "encodeRpcCallMessage",
+                    "filepath": "methods/rpcFrame/encodeRpcCallMessage.md"
+                  },
+                  "/rpcFrame/encodeRpcCallMessageWithCodec": {
+                    "type": "page",
+                    "title": "encodeRpcCallMessageWithCodec",
+                    "filepath": "methods/rpcFrame/encodeRpcCallMessageWithCodec.md"
+                  },
+                  "/rpcFrame/encodeRpcReturnMessage": {
+                    "type": "page",
+                    "title": "encodeRpcReturnMessage",
+                    "filepath": "methods/rpcFrame/encodeRpcReturnMessage.md"
+                  },
+                  "/rpcFrame/encodeRpcReturnMessageWithCodec": {
+                    "type": "page",
+                    "title": "encodeRpcReturnMessageWithCodec",
+                    "filepath": "methods/rpcFrame/encodeRpcReturnMessageWithCodec.md"
+                  }
+                }
+              },
+              "/rpcMethodRef": {
+                "type": "group",
+                "title": "rpcMethodRef",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "rpcMethodRef",
+                    "filepath": "methods/rpcMethodRef.md"
+                  },
+                  "/rpcMethodRef/attachRpcMethodMetadata": {
+                    "type": "page",
+                    "title": "attachRpcMethodMetadata",
+                    "filepath": "methods/rpcMethodRef/attachRpcMethodMetadata.md"
+                  },
+                  "/rpcMethodRef/createNamedRpcMethodRef": {
+                    "type": "page",
+                    "title": "createNamedRpcMethodRef",
+                    "filepath": "methods/rpcMethodRef/createNamedRpcMethodRef.md"
+                  },
+                  "/rpcMethodRef/createRpcCodecRegistry": {
+                    "type": "page",
+                    "title": "createRpcCodecRegistry",
+                    "filepath": "methods/rpcMethodRef/createRpcCodecRegistry.md"
+                  },
+                  "/rpcMethodRef/createRpcCodecResolverFromSurface": {
+                    "type": "page",
+                    "title": "createRpcCodecResolverFromSurface",
+                    "filepath": "methods/rpcMethodRef/createRpcCodecResolverFromSurface.md"
+                  },
+                  "/rpcMethodRef/createRpcProxy": {
+                    "type": "page",
+                    "title": "createRpcProxy",
+                    "filepath": "methods/rpcMethodRef/createRpcProxy.md"
+                  },
+                  "/rpcMethodRef/defineEndpointSurface": {
+                    "type": "page",
+                    "title": "defineEndpointSurface",
+                    "filepath": "methods/rpcMethodRef/defineEndpointSurface.md"
+                  },
+                  "/rpcMethodRef/defineRpcMethodRef": {
+                    "type": "page",
+                    "title": "defineRpcMethodRef",
+                    "filepath": "methods/rpcMethodRef/defineRpcMethodRef.md"
+                  },
+                  "/rpcMethodRef/getRpcMethodCodec": {
+                    "type": "page",
+                    "title": "getRpcMethodCodec",
+                    "filepath": "methods/rpcMethodRef/getRpcMethodCodec.md"
+                  },
+                  "/rpcMethodRef/getRpcMethodName": {
+                    "type": "page",
+                    "title": "getRpcMethodName",
+                    "filepath": "methods/rpcMethodRef/getRpcMethodName.md"
+                  },
+                  "/rpcMethodRef/isRpcMethodRef": {
+                    "type": "page",
+                    "title": "isRpcMethodRef",
+                    "filepath": "methods/rpcMethodRef/isRpcMethodRef.md"
+                  },
+                  "/rpcMethodRef/NRPC_METHOD_CALLER": {
+                    "type": "group",
+                    "title": "NRPC_METHOD_CALLER",
+                    "children": {
+                      "": {
+                        "type": "page",
+                        "title": "NRPC_METHOD_CALLER",
+                        "filepath": "methods/rpcMethodRef/NRPC_METHOD_CALLER.md"
+                      },
+                      "/rpcMethodRef/NRPC_METHOD_CALLER/description": {
+                        "type": "page",
+                        "title": "description",
+                        "filepath": "methods/rpcMethodRef/NRPC_METHOD_CALLER/description.md"
+                      },
+                      "/rpcMethodRef/NRPC_METHOD_CALLER/toString": {
+                        "type": "page",
+                        "title": "toString",
+                        "filepath": "methods/rpcMethodRef/NRPC_METHOD_CALLER/toString.md"
+                      },
+                      "/rpcMethodRef/NRPC_METHOD_CALLER/valueOf": {
+                        "type": "page",
+                        "title": "valueOf",
+                        "filepath": "methods/rpcMethodRef/NRPC_METHOD_CALLER/valueOf.md"
+                      }
+                    }
+                  },
+                  "/rpcMethodRef/NRPC_METHOD_CODEC": {
+                    "type": "group",
+                    "title": "NRPC_METHOD_CODEC",
+                    "children": {
+                      "": {
+                        "type": "page",
+                        "title": "NRPC_METHOD_CODEC",
+                        "filepath": "methods/rpcMethodRef/NRPC_METHOD_CODEC.md"
+                      },
+                      "/rpcMethodRef/NRPC_METHOD_CODEC/description": {
+                        "type": "page",
+                        "title": "description",
+                        "filepath": "methods/rpcMethodRef/NRPC_METHOD_CODEC/description.md"
+                      },
+                      "/rpcMethodRef/NRPC_METHOD_CODEC/toString": {
+                        "type": "page",
+                        "title": "toString",
+                        "filepath": "methods/rpcMethodRef/NRPC_METHOD_CODEC/toString.md"
+                      },
+                      "/rpcMethodRef/NRPC_METHOD_CODEC/valueOf": {
+                        "type": "page",
+                        "title": "valueOf",
+                        "filepath": "methods/rpcMethodRef/NRPC_METHOD_CODEC/valueOf.md"
+                      }
+                    }
+                  },
+                  "/rpcMethodRef/NRPC_METHOD_REF": {
+                    "type": "group",
+                    "title": "NRPC_METHOD_REF",
+                    "children": {
+                      "": {
+                        "type": "page",
+                        "title": "NRPC_METHOD_REF",
+                        "filepath": "methods/rpcMethodRef/NRPC_METHOD_REF.md"
+                      },
+                      "/rpcMethodRef/NRPC_METHOD_REF/description": {
+                        "type": "page",
+                        "title": "description",
+                        "filepath": "methods/rpcMethodRef/NRPC_METHOD_REF/description.md"
+                      },
+                      "/rpcMethodRef/NRPC_METHOD_REF/toString": {
+                        "type": "page",
+                        "title": "toString",
+                        "filepath": "methods/rpcMethodRef/NRPC_METHOD_REF/toString.md"
+                      },
+                      "/rpcMethodRef/NRPC_METHOD_REF/valueOf": {
+                        "type": "page",
+                        "title": "valueOf",
+                        "filepath": "methods/rpcMethodRef/NRPC_METHOD_REF/valueOf.md"
+                      }
+                    }
+                  },
+                  "/rpcMethodRef/serializeRpcMethodRefs": {
+                    "type": "page",
+                    "title": "serializeRpcMethodRefs",
+                    "filepath": "methods/rpcMethodRef/serializeRpcMethodRefs.md"
+                  },
+                  "/rpcMethodRef/withRpcMethodCodec": {
+                    "type": "page",
+                    "title": "withRpcMethodCodec",
+                    "filepath": "methods/rpcMethodRef/withRpcMethodCodec.md"
+                  }
+                }
+              },
+              "/serviceBunServer": {
+                "type": "group",
+                "title": "serviceBunServer",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "serviceBunServer",
+                    "filepath": "methods/serviceBunServer.md"
+                  },
+                  "/serviceBunServer/startBunRpcServer": {
+                    "type": "page",
+                    "title": "startBunRpcServer",
+                    "filepath": "methods/serviceBunServer/startBunRpcServer.md"
+                  }
+                }
+              },
+              "/serviceComposition": {
+                "type": "group",
+                "title": "serviceComposition",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "serviceComposition",
+                    "filepath": "methods/serviceComposition.md"
+                  },
+                  "/serviceComposition/mountRpcNamespace": {
+                    "type": "page",
+                    "title": "mountRpcNamespace",
+                    "filepath": "methods/serviceComposition/mountRpcNamespace.md"
+                  }
+                }
+              },
+              "/serviceConstants": {
+                "type": "group",
+                "title": "serviceConstants",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "serviceConstants",
+                    "filepath": "methods/serviceConstants.md"
+                  },
+                  "/serviceConstants/isWebsocketEnabled": {
+                    "type": "page",
+                    "title": "isWebsocketEnabled",
+                    "filepath": "methods/serviceConstants/isWebsocketEnabled.md"
+                  },
+                  "/serviceConstants/RPC_AWAIT_EVENT": {
+                    "type": "group",
+                    "title": "RPC_AWAIT_EVENT",
+                    "children": {
+                      "": {
+                        "type": "page",
+                        "title": "RPC_AWAIT_EVENT",
+                        "filepath": "methods/serviceConstants/RPC_AWAIT_EVENT.md"
+                      },
+                      "/serviceConstants/RPC_AWAIT_EVENT/toExponential": {
+                        "type": "page",
+                        "title": "toExponential",
+                        "filepath": "methods/serviceConstants/RPC_AWAIT_EVENT/toExponential.md"
+                      },
+                      "/serviceConstants/RPC_AWAIT_EVENT/toFixed": {
+                        "type": "page",
+                        "title": "toFixed",
+                        "filepath": "methods/serviceConstants/RPC_AWAIT_EVENT/toFixed.md"
+                      },
+                      "/serviceConstants/RPC_AWAIT_EVENT/toLocaleString": {
+                        "type": "page",
+                        "title": "toLocaleString",
+                        "filepath": "methods/serviceConstants/RPC_AWAIT_EVENT/toLocaleString.md"
+                      },
+                      "/serviceConstants/RPC_AWAIT_EVENT/toPrecision": {
+                        "type": "page",
+                        "title": "toPrecision",
+                        "filepath": "methods/serviceConstants/RPC_AWAIT_EVENT/toPrecision.md"
+                      },
+                      "/serviceConstants/RPC_AWAIT_EVENT/toString": {
+                        "type": "page",
+                        "title": "toString",
+                        "filepath": "methods/serviceConstants/RPC_AWAIT_EVENT/toString.md"
+                      },
+                      "/serviceConstants/RPC_AWAIT_EVENT/valueOf": {
+                        "type": "page",
+                        "title": "valueOf",
+                        "filepath": "methods/serviceConstants/RPC_AWAIT_EVENT/valueOf.md"
+                      }
+                    }
+                  },
+                  "/serviceConstants/RPC_RETURN_EVENT": {
+                    "type": "group",
+                    "title": "RPC_RETURN_EVENT",
+                    "children": {
+                      "": {
+                        "type": "page",
+                        "title": "RPC_RETURN_EVENT",
+                        "filepath": "methods/serviceConstants/RPC_RETURN_EVENT.md"
+                      },
+                      "/serviceConstants/RPC_RETURN_EVENT/toExponential": {
+                        "type": "page",
+                        "title": "toExponential",
+                        "filepath": "methods/serviceConstants/RPC_RETURN_EVENT/toExponential.md"
+                      },
+                      "/serviceConstants/RPC_RETURN_EVENT/toFixed": {
+                        "type": "page",
+                        "title": "toFixed",
+                        "filepath": "methods/serviceConstants/RPC_RETURN_EVENT/toFixed.md"
+                      },
+                      "/serviceConstants/RPC_RETURN_EVENT/toLocaleString": {
+                        "type": "page",
+                        "title": "toLocaleString",
+                        "filepath": "methods/serviceConstants/RPC_RETURN_EVENT/toLocaleString.md"
+                      },
+                      "/serviceConstants/RPC_RETURN_EVENT/toPrecision": {
+                        "type": "page",
+                        "title": "toPrecision",
+                        "filepath": "methods/serviceConstants/RPC_RETURN_EVENT/toPrecision.md"
+                      },
+                      "/serviceConstants/RPC_RETURN_EVENT/toString": {
+                        "type": "page",
+                        "title": "toString",
+                        "filepath": "methods/serviceConstants/RPC_RETURN_EVENT/toString.md"
+                      },
+                      "/serviceConstants/RPC_RETURN_EVENT/valueOf": {
+                        "type": "page",
+                        "title": "valueOf",
+                        "filepath": "methods/serviceConstants/RPC_RETURN_EVENT/valueOf.md"
+                      }
+                    }
+                  }
+                }
+              },
+              "/serviceEnv": {
+                "type": "group",
+                "title": "serviceEnv",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "serviceEnv",
+                    "filepath": "methods/serviceEnv.md"
+                  },
+                  "/serviceEnv/loadServiceConfig": {
+                    "type": "page",
+                    "title": "loadServiceConfig",
+                    "filepath": "methods/serviceEnv/loadServiceConfig.md"
+                  }
+                }
+              },
+              "/serviceErrors": {
+                "type": "group",
+                "title": "serviceErrors",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "serviceErrors",
+                    "filepath": "methods/serviceErrors.md"
+                  },
+                  "/serviceErrors/defaultTransformError": {
+                    "type": "page",
+                    "title": "defaultTransformError",
+                    "filepath": "methods/serviceErrors/defaultTransformError.md"
+                  },
+                  "/serviceErrors/isRpcServiceError": {
+                    "type": "page",
+                    "title": "isRpcServiceError",
+                    "filepath": "methods/serviceErrors/isRpcServiceError.md"
+                  },
+                  "/serviceErrors/RpcServiceError": {
+                    "type": "page",
+                    "title": "RpcServiceError",
+                    "filepath": "methods/serviceErrors/RpcServiceError.md"
+                  }
+                }
+              },
+              "/serviceFetchHandler": {
+                "type": "page",
+                "title": "serviceFetchHandler",
+                "filepath": "methods/serviceFetchHandler.md"
+              },
+              "/serviceResponses": {
+                "type": "group",
+                "title": "serviceResponses",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "serviceResponses",
+                    "filepath": "methods/serviceResponses.md"
+                  },
+                  "/serviceResponses/jsonError": {
+                    "type": "page",
+                    "title": "jsonError",
+                    "filepath": "methods/serviceResponses/jsonError.md"
+                  },
+                  "/serviceResponses/notFoundJson": {
+                    "type": "page",
+                    "title": "notFoundJson",
+                    "filepath": "methods/serviceResponses/notFoundJson.md"
+                  }
+                }
+              },
+              "/serviceWsDispatcher": {
+                "type": "page",
+                "title": "serviceWsDispatcher",
+                "filepath": "methods/serviceWsDispatcher.md"
+              },
+              "/syntheticRpcSurface": {
+                "type": "group",
+                "title": "syntheticRpcSurface",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "syntheticRpcSurface",
+                    "filepath": "methods/syntheticRpcSurface.md"
+                  },
+                  "/syntheticRpcSurface/asUpstreamProxyInjectionDefinition": {
+                    "type": "page",
+                    "title": "asUpstreamProxyInjectionDefinition",
+                    "filepath": "methods/syntheticRpcSurface/asUpstreamProxyInjectionDefinition.md"
+                  },
+                  "/syntheticRpcSurface/buildSyntheticRpcDeclaration": {
+                    "type": "page",
+                    "title": "buildSyntheticRpcDeclaration",
+                    "filepath": "methods/syntheticRpcSurface/buildSyntheticRpcDeclaration.md"
+                  },
+                  "/syntheticRpcSurface/defineHostRpcSurface": {
+                    "type": "page",
+                    "title": "defineHostRpcSurface",
+                    "filepath": "methods/syntheticRpcSurface/defineHostRpcSurface.md"
+                  },
+                  "/syntheticRpcSurface/defineSyntheticRpcBinding": {
+                    "type": "page",
+                    "title": "defineSyntheticRpcBinding",
+                    "filepath": "methods/syntheticRpcSurface/defineSyntheticRpcBinding.md"
+                  },
+                  "/syntheticRpcSurface/defineSyntheticRpcSurface": {
+                    "type": "page",
+                    "title": "defineSyntheticRpcSurface",
+                    "filepath": "methods/syntheticRpcSurface/defineSyntheticRpcSurface.md"
+                  }
+                }
+              },
+              "/types": {
+                "type": "group",
+                "title": "types",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "types",
+                    "filepath": "methods/types.md"
+                  },
+                  "/types/RpcArgTag": {
+                    "type": "group",
+                    "title": "RpcArgTag",
+                    "children": {
+                      "": {
+                        "type": "page",
+                        "title": "RpcArgTag",
+                        "filepath": "methods/types/RpcArgTag.md"
+                      },
+                      "/types/RpcArgTag/Array": {
+                        "type": "group",
+                        "title": "Array",
+                        "children": {
+                          "/types/RpcArgTag/Array/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/RpcArgTag/Array/toExponential.md"
+                          },
+                          "/types/RpcArgTag/Array/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/RpcArgTag/Array/toFixed.md"
+                          },
+                          "/types/RpcArgTag/Array/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/RpcArgTag/Array/toLocaleString.md"
+                          },
+                          "/types/RpcArgTag/Array/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/RpcArgTag/Array/toPrecision.md"
+                          },
+                          "/types/RpcArgTag/Array/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/RpcArgTag/Array/toString.md"
+                          },
+                          "/types/RpcArgTag/Array/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/RpcArgTag/Array/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/RpcArgTag/BigInt64": {
+                        "type": "group",
+                        "title": "BigInt64",
+                        "children": {
+                          "/types/RpcArgTag/BigInt64/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/RpcArgTag/BigInt64/toExponential.md"
+                          },
+                          "/types/RpcArgTag/BigInt64/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/RpcArgTag/BigInt64/toFixed.md"
+                          },
+                          "/types/RpcArgTag/BigInt64/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/RpcArgTag/BigInt64/toLocaleString.md"
+                          },
+                          "/types/RpcArgTag/BigInt64/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/RpcArgTag/BigInt64/toPrecision.md"
+                          },
+                          "/types/RpcArgTag/BigInt64/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/RpcArgTag/BigInt64/toString.md"
+                          },
+                          "/types/RpcArgTag/BigInt64/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/RpcArgTag/BigInt64/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/RpcArgTag/False": {
+                        "type": "group",
+                        "title": "False",
+                        "children": {
+                          "/types/RpcArgTag/False/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/RpcArgTag/False/toExponential.md"
+                          },
+                          "/types/RpcArgTag/False/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/RpcArgTag/False/toFixed.md"
+                          },
+                          "/types/RpcArgTag/False/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/RpcArgTag/False/toLocaleString.md"
+                          },
+                          "/types/RpcArgTag/False/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/RpcArgTag/False/toPrecision.md"
+                          },
+                          "/types/RpcArgTag/False/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/RpcArgTag/False/toString.md"
+                          },
+                          "/types/RpcArgTag/False/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/RpcArgTag/False/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/RpcArgTag/Float64": {
+                        "type": "group",
+                        "title": "Float64",
+                        "children": {
+                          "/types/RpcArgTag/Float64/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/RpcArgTag/Float64/toExponential.md"
+                          },
+                          "/types/RpcArgTag/Float64/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/RpcArgTag/Float64/toFixed.md"
+                          },
+                          "/types/RpcArgTag/Float64/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/RpcArgTag/Float64/toLocaleString.md"
+                          },
+                          "/types/RpcArgTag/Float64/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/RpcArgTag/Float64/toPrecision.md"
+                          },
+                          "/types/RpcArgTag/Float64/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/RpcArgTag/Float64/toString.md"
+                          },
+                          "/types/RpcArgTag/Float64/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/RpcArgTag/Float64/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/RpcArgTag/Null": {
+                        "type": "group",
+                        "title": "Null",
+                        "children": {
+                          "/types/RpcArgTag/Null/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/RpcArgTag/Null/toExponential.md"
+                          },
+                          "/types/RpcArgTag/Null/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/RpcArgTag/Null/toFixed.md"
+                          },
+                          "/types/RpcArgTag/Null/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/RpcArgTag/Null/toLocaleString.md"
+                          },
+                          "/types/RpcArgTag/Null/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/RpcArgTag/Null/toPrecision.md"
+                          },
+                          "/types/RpcArgTag/Null/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/RpcArgTag/Null/toString.md"
+                          },
+                          "/types/RpcArgTag/Null/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/RpcArgTag/Null/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/RpcArgTag/Object": {
+                        "type": "group",
+                        "title": "Object",
+                        "children": {
+                          "/types/RpcArgTag/Object/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/RpcArgTag/Object/toExponential.md"
+                          },
+                          "/types/RpcArgTag/Object/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/RpcArgTag/Object/toFixed.md"
+                          },
+                          "/types/RpcArgTag/Object/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/RpcArgTag/Object/toLocaleString.md"
+                          },
+                          "/types/RpcArgTag/Object/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/RpcArgTag/Object/toPrecision.md"
+                          },
+                          "/types/RpcArgTag/Object/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/RpcArgTag/Object/toString.md"
+                          },
+                          "/types/RpcArgTag/Object/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/RpcArgTag/Object/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/RpcArgTag/String": {
+                        "type": "group",
+                        "title": "String",
+                        "children": {
+                          "/types/RpcArgTag/String/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/RpcArgTag/String/toExponential.md"
+                          },
+                          "/types/RpcArgTag/String/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/RpcArgTag/String/toFixed.md"
+                          },
+                          "/types/RpcArgTag/String/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/RpcArgTag/String/toLocaleString.md"
+                          },
+                          "/types/RpcArgTag/String/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/RpcArgTag/String/toPrecision.md"
+                          },
+                          "/types/RpcArgTag/String/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/RpcArgTag/String/toString.md"
+                          },
+                          "/types/RpcArgTag/String/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/RpcArgTag/String/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/RpcArgTag/True": {
+                        "type": "group",
+                        "title": "True",
+                        "children": {
+                          "/types/RpcArgTag/True/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/RpcArgTag/True/toExponential.md"
+                          },
+                          "/types/RpcArgTag/True/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/RpcArgTag/True/toFixed.md"
+                          },
+                          "/types/RpcArgTag/True/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/RpcArgTag/True/toLocaleString.md"
+                          },
+                          "/types/RpcArgTag/True/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/RpcArgTag/True/toPrecision.md"
+                          },
+                          "/types/RpcArgTag/True/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/RpcArgTag/True/toString.md"
+                          },
+                          "/types/RpcArgTag/True/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/RpcArgTag/True/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/RpcArgTag/TypedArray": {
+                        "type": "group",
+                        "title": "TypedArray",
+                        "children": {
+                          "/types/RpcArgTag/TypedArray/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/RpcArgTag/TypedArray/toExponential.md"
+                          },
+                          "/types/RpcArgTag/TypedArray/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/RpcArgTag/TypedArray/toFixed.md"
+                          },
+                          "/types/RpcArgTag/TypedArray/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/RpcArgTag/TypedArray/toLocaleString.md"
+                          },
+                          "/types/RpcArgTag/TypedArray/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/RpcArgTag/TypedArray/toPrecision.md"
+                          },
+                          "/types/RpcArgTag/TypedArray/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/RpcArgTag/TypedArray/toString.md"
+                          },
+                          "/types/RpcArgTag/TypedArray/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/RpcArgTag/TypedArray/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/RpcArgTag/Undefined": {
+                        "type": "group",
+                        "title": "Undefined",
+                        "children": {
+                          "/types/RpcArgTag/Undefined/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/RpcArgTag/Undefined/toExponential.md"
+                          },
+                          "/types/RpcArgTag/Undefined/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/RpcArgTag/Undefined/toFixed.md"
+                          },
+                          "/types/RpcArgTag/Undefined/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/RpcArgTag/Undefined/toLocaleString.md"
+                          },
+                          "/types/RpcArgTag/Undefined/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/RpcArgTag/Undefined/toPrecision.md"
+                          },
+                          "/types/RpcArgTag/Undefined/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/RpcArgTag/Undefined/toString.md"
+                          },
+                          "/types/RpcArgTag/Undefined/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/RpcArgTag/Undefined/valueOf.md"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "/types/TypedArrayType": {
+                    "type": "group",
+                    "title": "TypedArrayType",
+                    "children": {
+                      "": {
+                        "type": "page",
+                        "title": "TypedArrayType",
+                        "filepath": "methods/types/TypedArrayType.md"
+                      },
+                      "/types/TypedArrayType/BigInt64": {
+                        "type": "group",
+                        "title": "BigInt64",
+                        "children": {
+                          "/types/TypedArrayType/BigInt64/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/TypedArrayType/BigInt64/toExponential.md"
+                          },
+                          "/types/TypedArrayType/BigInt64/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/TypedArrayType/BigInt64/toFixed.md"
+                          },
+                          "/types/TypedArrayType/BigInt64/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/TypedArrayType/BigInt64/toLocaleString.md"
+                          },
+                          "/types/TypedArrayType/BigInt64/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/TypedArrayType/BigInt64/toPrecision.md"
+                          },
+                          "/types/TypedArrayType/BigInt64/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/TypedArrayType/BigInt64/toString.md"
+                          },
+                          "/types/TypedArrayType/BigInt64/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/TypedArrayType/BigInt64/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/TypedArrayType/BigUint64": {
+                        "type": "group",
+                        "title": "BigUint64",
+                        "children": {
+                          "/types/TypedArrayType/BigUint64/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/TypedArrayType/BigUint64/toExponential.md"
+                          },
+                          "/types/TypedArrayType/BigUint64/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/TypedArrayType/BigUint64/toFixed.md"
+                          },
+                          "/types/TypedArrayType/BigUint64/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/TypedArrayType/BigUint64/toLocaleString.md"
+                          },
+                          "/types/TypedArrayType/BigUint64/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/TypedArrayType/BigUint64/toPrecision.md"
+                          },
+                          "/types/TypedArrayType/BigUint64/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/TypedArrayType/BigUint64/toString.md"
+                          },
+                          "/types/TypedArrayType/BigUint64/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/TypedArrayType/BigUint64/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/TypedArrayType/Float32": {
+                        "type": "group",
+                        "title": "Float32",
+                        "children": {
+                          "/types/TypedArrayType/Float32/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/TypedArrayType/Float32/toExponential.md"
+                          },
+                          "/types/TypedArrayType/Float32/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/TypedArrayType/Float32/toFixed.md"
+                          },
+                          "/types/TypedArrayType/Float32/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/TypedArrayType/Float32/toLocaleString.md"
+                          },
+                          "/types/TypedArrayType/Float32/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/TypedArrayType/Float32/toPrecision.md"
+                          },
+                          "/types/TypedArrayType/Float32/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/TypedArrayType/Float32/toString.md"
+                          },
+                          "/types/TypedArrayType/Float32/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/TypedArrayType/Float32/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/TypedArrayType/Float64": {
+                        "type": "group",
+                        "title": "Float64",
+                        "children": {
+                          "/types/TypedArrayType/Float64/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/TypedArrayType/Float64/toExponential.md"
+                          },
+                          "/types/TypedArrayType/Float64/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/TypedArrayType/Float64/toFixed.md"
+                          },
+                          "/types/TypedArrayType/Float64/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/TypedArrayType/Float64/toLocaleString.md"
+                          },
+                          "/types/TypedArrayType/Float64/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/TypedArrayType/Float64/toPrecision.md"
+                          },
+                          "/types/TypedArrayType/Float64/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/TypedArrayType/Float64/toString.md"
+                          },
+                          "/types/TypedArrayType/Float64/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/TypedArrayType/Float64/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/TypedArrayType/Int16": {
+                        "type": "group",
+                        "title": "Int16",
+                        "children": {
+                          "/types/TypedArrayType/Int16/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/TypedArrayType/Int16/toExponential.md"
+                          },
+                          "/types/TypedArrayType/Int16/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/TypedArrayType/Int16/toFixed.md"
+                          },
+                          "/types/TypedArrayType/Int16/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/TypedArrayType/Int16/toLocaleString.md"
+                          },
+                          "/types/TypedArrayType/Int16/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/TypedArrayType/Int16/toPrecision.md"
+                          },
+                          "/types/TypedArrayType/Int16/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/TypedArrayType/Int16/toString.md"
+                          },
+                          "/types/TypedArrayType/Int16/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/TypedArrayType/Int16/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/TypedArrayType/Int32": {
+                        "type": "group",
+                        "title": "Int32",
+                        "children": {
+                          "/types/TypedArrayType/Int32/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/TypedArrayType/Int32/toExponential.md"
+                          },
+                          "/types/TypedArrayType/Int32/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/TypedArrayType/Int32/toFixed.md"
+                          },
+                          "/types/TypedArrayType/Int32/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/TypedArrayType/Int32/toLocaleString.md"
+                          },
+                          "/types/TypedArrayType/Int32/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/TypedArrayType/Int32/toPrecision.md"
+                          },
+                          "/types/TypedArrayType/Int32/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/TypedArrayType/Int32/toString.md"
+                          },
+                          "/types/TypedArrayType/Int32/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/TypedArrayType/Int32/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/TypedArrayType/Int8": {
+                        "type": "group",
+                        "title": "Int8",
+                        "children": {
+                          "/types/TypedArrayType/Int8/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/TypedArrayType/Int8/toExponential.md"
+                          },
+                          "/types/TypedArrayType/Int8/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/TypedArrayType/Int8/toFixed.md"
+                          },
+                          "/types/TypedArrayType/Int8/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/TypedArrayType/Int8/toLocaleString.md"
+                          },
+                          "/types/TypedArrayType/Int8/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/TypedArrayType/Int8/toPrecision.md"
+                          },
+                          "/types/TypedArrayType/Int8/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/TypedArrayType/Int8/toString.md"
+                          },
+                          "/types/TypedArrayType/Int8/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/TypedArrayType/Int8/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/TypedArrayType/Uint16": {
+                        "type": "group",
+                        "title": "Uint16",
+                        "children": {
+                          "/types/TypedArrayType/Uint16/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/TypedArrayType/Uint16/toExponential.md"
+                          },
+                          "/types/TypedArrayType/Uint16/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/TypedArrayType/Uint16/toFixed.md"
+                          },
+                          "/types/TypedArrayType/Uint16/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/TypedArrayType/Uint16/toLocaleString.md"
+                          },
+                          "/types/TypedArrayType/Uint16/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/TypedArrayType/Uint16/toPrecision.md"
+                          },
+                          "/types/TypedArrayType/Uint16/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/TypedArrayType/Uint16/toString.md"
+                          },
+                          "/types/TypedArrayType/Uint16/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/TypedArrayType/Uint16/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/TypedArrayType/Uint32": {
+                        "type": "group",
+                        "title": "Uint32",
+                        "children": {
+                          "/types/TypedArrayType/Uint32/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/TypedArrayType/Uint32/toExponential.md"
+                          },
+                          "/types/TypedArrayType/Uint32/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/TypedArrayType/Uint32/toFixed.md"
+                          },
+                          "/types/TypedArrayType/Uint32/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/TypedArrayType/Uint32/toLocaleString.md"
+                          },
+                          "/types/TypedArrayType/Uint32/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/TypedArrayType/Uint32/toPrecision.md"
+                          },
+                          "/types/TypedArrayType/Uint32/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/TypedArrayType/Uint32/toString.md"
+                          },
+                          "/types/TypedArrayType/Uint32/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/TypedArrayType/Uint32/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/TypedArrayType/Uint8": {
+                        "type": "group",
+                        "title": "Uint8",
+                        "children": {
+                          "/types/TypedArrayType/Uint8/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/TypedArrayType/Uint8/toExponential.md"
+                          },
+                          "/types/TypedArrayType/Uint8/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/TypedArrayType/Uint8/toFixed.md"
+                          },
+                          "/types/TypedArrayType/Uint8/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/TypedArrayType/Uint8/toLocaleString.md"
+                          },
+                          "/types/TypedArrayType/Uint8/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/TypedArrayType/Uint8/toPrecision.md"
+                          },
+                          "/types/TypedArrayType/Uint8/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/TypedArrayType/Uint8/toString.md"
+                          },
+                          "/types/TypedArrayType/Uint8/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/TypedArrayType/Uint8/valueOf.md"
+                          }
+                        }
+                      },
+                      "/types/TypedArrayType/Uint8Clamped": {
+                        "type": "group",
+                        "title": "Uint8Clamped",
+                        "children": {
+                          "/types/TypedArrayType/Uint8Clamped/toExponential": {
+                            "type": "page",
+                            "title": "toExponential",
+                            "filepath": "methods/types/TypedArrayType/Uint8Clamped/toExponential.md"
+                          },
+                          "/types/TypedArrayType/Uint8Clamped/toFixed": {
+                            "type": "page",
+                            "title": "toFixed",
+                            "filepath": "methods/types/TypedArrayType/Uint8Clamped/toFixed.md"
+                          },
+                          "/types/TypedArrayType/Uint8Clamped/toLocaleString": {
+                            "type": "page",
+                            "title": "toLocaleString",
+                            "filepath": "methods/types/TypedArrayType/Uint8Clamped/toLocaleString.md"
+                          },
+                          "/types/TypedArrayType/Uint8Clamped/toPrecision": {
+                            "type": "page",
+                            "title": "toPrecision",
+                            "filepath": "methods/types/TypedArrayType/Uint8Clamped/toPrecision.md"
+                          },
+                          "/types/TypedArrayType/Uint8Clamped/toString": {
+                            "type": "page",
+                            "title": "toString",
+                            "filepath": "methods/types/TypedArrayType/Uint8Clamped/toString.md"
+                          },
+                          "/types/TypedArrayType/Uint8Clamped/valueOf": {
+                            "type": "page",
+                            "title": "valueOf",
+                            "filepath": "methods/types/TypedArrayType/Uint8Clamped/valueOf.md"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "/upstreamProxyInjection": {
+                "type": "group",
+                "title": "upstreamProxyInjection",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "upstreamProxyInjection",
+                    "filepath": "methods/upstreamProxyInjection.md"
+                  },
+                  "/upstreamProxyInjection/asUpstreamProxyInjectionDefinition": {
+                    "type": "page",
+                    "title": "asUpstreamProxyInjectionDefinition",
+                    "filepath": "methods/upstreamProxyInjection/asUpstreamProxyInjectionDefinition.md"
+                  },
+                  "/upstreamProxyInjection/buildSyntheticRpcDeclaration": {
+                    "type": "page",
+                    "title": "buildSyntheticRpcDeclaration",
+                    "filepath": "methods/upstreamProxyInjection/buildSyntheticRpcDeclaration.md"
+                  },
+                  "/upstreamProxyInjection/defineHostRpcSurface": {
+                    "type": "page",
+                    "title": "defineHostRpcSurface",
+                    "filepath": "methods/upstreamProxyInjection/defineHostRpcSurface.md"
+                  },
+                  "/upstreamProxyInjection/defineSyntheticRpcBinding": {
+                    "type": "page",
+                    "title": "defineSyntheticRpcBinding",
+                    "filepath": "methods/upstreamProxyInjection/defineSyntheticRpcBinding.md"
+                  },
+                  "/upstreamProxyInjection/defineSyntheticRpcSurface": {
+                    "type": "page",
+                    "title": "defineSyntheticRpcSurface",
+                    "filepath": "methods/upstreamProxyInjection/defineSyntheticRpcSurface.md"
+                  }
+                }
+              },
+              "/valueCodec": {
+                "type": "group",
+                "title": "valueCodec",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "valueCodec",
+                    "filepath": "methods/valueCodec.md"
+                  },
+                  "/valueCodec/decodeRpcValue": {
+                    "type": "page",
+                    "title": "decodeRpcValue",
+                    "filepath": "methods/valueCodec/decodeRpcValue.md"
+                  },
+                  "/valueCodec/encodeRpcValue": {
+                    "type": "page",
+                    "title": "encodeRpcValue",
+                    "filepath": "methods/valueCodec/encodeRpcValue.md"
+                  }
+                }
+              },
+              "/webRuntime": {
+                "type": "group",
+                "title": "webRuntime",
+                "children": {
+                  "": {
+                    "type": "page",
+                    "title": "webRuntime",
+                    "filepath": "methods/webRuntime.md"
+                  },
+                  "/webRuntime/attachRpcCallOptions": {
+                    "type": "page",
+                    "title": "attachRpcCallOptions",
+                    "filepath": "methods/webRuntime/attachRpcCallOptions.md"
+                  },
+                  "/webRuntime/createRpcMethodInvoker": {
+                    "type": "page",
+                    "title": "createRpcMethodInvoker",
+                    "filepath": "methods/webRuntime/createRpcMethodInvoker.md"
+                  },
+                  "/webRuntime/resolveRpcMethod": {
+                    "type": "page",
+                    "title": "resolveRpcMethod",
+                    "filepath": "methods/webRuntime/resolveRpcMethod.md"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

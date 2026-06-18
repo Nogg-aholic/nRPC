@@ -1,7 +1,7 @@
 {
   "name": "@nogg-aholic/nrpc",
   "description": "Small binary RPC codec for compact value encoding and generic RPC message framing.",
-  "version": "0.8.0",
+  "version": "0.8.2",
   "homepage": "https://github.com/Nogg-aholic/nRPC#readme",
   "license": "MIT",
   "type": "module",
@@ -12,61 +12,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
-    },
-    "./types": {
-      "types": "./dist/types.d.ts",
-      "import": "./dist/types.js",
-      "default": "./dist/types.js"
-    },
-    "./encoding": {
-      "types": "./dist/encoding.d.ts",
-      "import": "./dist/encoding.js",
-      "default": "./dist/encoding.js"
-    },
-    "./value-codec": {
-      "types": "./dist/value-codec.d.ts",
-      "import": "./dist/value-codec.js",
-      "default": "./dist/value-codec.js"
-    },
-    "./rpc-frame": {
-      "types": "./dist/rpc-frame.d.ts",
-      "import": "./dist/rpc-frame.js",
-      "default": "./dist/rpc-frame.js"
-    },
-    "./rpc-method-ref": {
-      "types": "./dist/rpc-method-ref.d.ts",
-      "import": "./dist/rpc-method-ref.js",
-      "default": "./dist/rpc-method-ref.js"
-    },
-    "./http-route-runtime": {
-      "types": "./dist/http-route-runtime.d.ts",
-      "import": "./dist/http-route-runtime.js",
-      "default": "./dist/http-route-runtime.js"
-    },
-    "./web-runtime": {
-      "types": "./dist/web-runtime.d.ts",
-      "import": "./dist/web-runtime.js",
-      "default": "./dist/web-runtime.js"
-    },
-    "./generated-codec-runtime": {
-      "types": "./dist/generated-codec-runtime.d.ts",
-      "import": "./dist/generated-codec-runtime.js",
-      "default": "./dist/generated-codec-runtime.js"
-    },
-    "./mcp-http-handler": {
-      "types": "./dist/mcp-http-handler.d.ts",
-      "import": "./dist/mcp-http-handler.js",
-      "default": "./dist/mcp-http-handler.js"
-    },
-    "./synthetic-rpc-surface": {
-      "types": "./dist/synthetic-rpc-surface.d.ts",
-      "import": "./dist/synthetic-rpc-surface.js",
-      "default": "./dist/synthetic-rpc-surface.js"
-    },
-    "./upstream-proxy-injection": {
-      "types": "./dist/upstream-proxy-injection.d.ts",
-      "import": "./dist/upstream-proxy-injection.js",
-      "default": "./dist/upstream-proxy-injection.js"
     },
     "./*": {
       "types": "./dist/*.d.ts",
@@ -107,5 +52,25 @@
     "@types/bun": "latest",
     "@types/node": "^25.6.0",
     "typescript": "^6.0.3"
+  },
+  "peerDependencies": {
+    "@opentelemetry/api-logs": "^0.219.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.77.0",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.219.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.219.0",
+    "@opentelemetry/instrumentation-undici": "^0.29.0",
+    "@opentelemetry/sdk-logs": "^0.219.0",
+    "@opentelemetry/sdk-node": "^0.219.0",
+    "@opentelemetry/sdk-trace-base": "^2.8.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentelemetry/api-logs": { "optional": true },
+    "@opentelemetry/auto-instrumentations-node": { "optional": true },
+    "@opentelemetry/exporter-logs-otlp-http": { "optional": true },
+    "@opentelemetry/exporter-trace-otlp-http": { "optional": true },
+    "@opentelemetry/instrumentation-undici": { "optional": true },
+    "@opentelemetry/sdk-logs": { "optional": true },
+    "@opentelemetry/sdk-node": { "optional": true },
+    "@opentelemetry/sdk-trace-base": { "optional": true }
   }
 }
